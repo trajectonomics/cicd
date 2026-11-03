@@ -1,0 +1,24 @@
+name: PR title
+
+# Squash merges use the PR title as the commit subject, and scripts/version.ts
+# reads those subjects to pick the next version. So the title must be a
+# conventional commit: feat: -> minor, feat!: / BREAKING CHANGE -> major,
+# anything else -> patch.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  conventional:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if printf '%s' "$TITLE" | grep -Eq '^(feat|fix|perf|refactor|docs|test|build|ci|chore|style|revert)(\([a-z0-9._-]+\))?!?: .+'; then
+            echo "ok: $TITLE"
+          else
+            echo "::error::PR title must be a conventional commit, e.g. 'feat(ledger): add account balance' or 'fix!: rename Posting.amount'. Got: $TITLE"
+            exit 1
+          fi
