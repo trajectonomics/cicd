@@ -138,7 +138,7 @@ def is_thread_for_repo(t: Dict[str, Any], repo: str) -> bool:
     t_lower = t_title.lower()
 
     # 1. If thread title explicitly mentions the repo basename or full repo name
-    # e.g. "cli #4", "trajectonomics-lab/cli#4", "Review sim-core #3"
+    # e.g. "cli #4", "trajectonomics/cli#4", "Review sim-core #3"
     if re.search(rf"\b{re.escape(repo_basename)}\b", t_lower) or repo.lower() in t_lower:
         return True
 
@@ -235,7 +235,7 @@ def is_issue_open(issue_ref: str, current_repo: str, cache: Dict[str, bool]) -> 
         if parts[0]:
             target_repo = parts[0].strip()
             if "/" not in target_repo:
-                owner = current_repo.split("/")[0] if "/" in current_repo else "trajectonomics-lab"
+                owner = current_repo.split("/")[0] if "/" in current_repo else "trajectonomics"
                 target_repo = f"{owner}/{target_repo}"
         target_num = parts[1].strip()
     elif issue_ref.startswith("http"):
@@ -483,7 +483,7 @@ def pick_issue(
 
     # Text UI Output
     print("=" * 70)
-    print("🎯 Trajectonomics Lab Issue Picker")
+    print("🎯 Trajectonomics Issue Picker")
     print("=" * 70)
     print(f"Scanned {len(repos)} repositories: {', '.join(repos)}")
     print(f"Active T3 Code threads monitored: {len(active_threads)}")
@@ -534,8 +534,8 @@ def pick_issue(
 
 def main():
     parser = argparse.ArgumentParser(description="Pick the next unblocked, unhandled GitHub issue")
-    parser.add_argument("--repo", help="Target repository (e.g. trajectonomics-lab/ledger-core)")
-    parser.add_argument("--org", default="trajectonomics-lab", help="Target organization (default: trajectonomics-lab)")
+    parser.add_argument("--repo", help="Target repository (e.g. trajectonomics/ledger-core)")
+    parser.add_argument("--org", default="trajectonomics", help="Target organization (default: trajectonomics)")
     parser.add_argument("--all-org", action="store_true", help="Scan all repositories in the organization")
     parser.add_argument("--active-threads", nargs="*", help="List of active thread titles to consider handled")
     parser.add_argument("--json", action="store_true", help="Output results in JSON format")

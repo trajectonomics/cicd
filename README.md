@@ -1,11 +1,11 @@
 # @trajectonomics/technical-template
 
-The official starter repository template for technical packages, libraries, and services across [Trajectonomics Lab](https://github.com/trajectonomics-lab).
+The official starter repository template for technical packages, libraries, and services across [Trajectonomics](https://github.com/trajectonomics).
 
 ## Highlights
 
 - **Interactive Repo Setup**: Includes the single-use `/setup-the-repo` skill (or `bun run setup`) that interactively customizes package metadata, README, GLOSSARY, CI workflows, and starter code for your archetype, self-destructs to leave a clean repo, and prompts setting up Matt Pocock's skills.
-- **AI Agent Skills Ready**: Bundled with [Matt Pocock's skills](https://github.com/mattpocock/skills) (`ask-matt`, `tdd`, `implement`, `wayfinder`, `code-review`, etc.) and Trajectonomics [internal skills](https://github.com/trajectonomics-lab/internal-skills) (`pick-the-issue`) managed via `skills-lock.json`. Compatible with Claude Code, Codex, OpenCode, Antigravity CLI, and Pi.
+- **AI Agent Skills Ready**: Bundled with [Matt Pocock's skills](https://github.com/mattpocock/skills) (`ask-matt`, `tdd`, `implement`, `wayfinder`, `code-review`, etc.) and Trajectonomics [internal skills](https://github.com/trajectonomics/internal-skills) (`pick-the-issue`) managed via `skills-lock.json`. Compatible with Claude Code, Codex, OpenCode, Antigravity CLI, and Pi.
 - **Bun First**: Built on [Bun](https://bun.sh) (`1.4.4`) for blazing fast testing, installs, and script execution.
 - **Dual ESM + CJS Output**: Powered by [`tsdown`](https://github.com/sxzz/tsdown) with full `.d.ts` and `.d.mts` declaration generation.
 - **Strict Verification Pipeline**: Biome linting and formatting (with strict file line ceilings and cognitive complexity limits), strict TypeScript compilation with `isolatedDeclarations`, tests via `bun test`, plus package export verification via [`publint`](https://publint.dev) and [`@arethetypeswrong/cli`](https://github.com/arethetypeswrong/arethetypeswrong).
@@ -20,13 +20,13 @@ The official starter repository template for technical packages, libraries, and 
 
 Using GitHub CLI:
 ```bash
-gh repo create trajectonomics-lab/<new-repo-name> \
-  --template trajectonomics-lab/technical-template \
+gh repo create trajectonomics/<new-repo-name> \
+  --template trajectonomics/technical-template \
   --public \
   --clone
 ```
 
-Or click **"Use this template"** on GitHub at [trajectonomics-lab/technical-template](https://github.com/trajectonomics-lab/technical-template).
+Or click **"Use this template"** on GitHub at [trajectonomics/technical-template](https://github.com/trajectonomics/technical-template).
 
 ### 2. Run Interactive Setup
 

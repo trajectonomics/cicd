@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for AI coding agents working in `trajectonomics-lab` repositories instantiated from this template.
+Instructions for AI coding agents working in `trajectonomics` repositories instantiated from this template.
 
 ## Rules
 
@@ -17,7 +17,7 @@ Instructions for AI coding agents working in `trajectonomics-lab` repositories i
 
 - **Bootstrap Skill (`setup-the-repo`)**: Single-use interactive setup wizard. When initializing a new repo from this template, run `/setup-the-repo` (or `bun run setup`). It customizes the repository, verifies the build, removes itself, and instructs you to run `/setup-matt-pocock-skills`.
 - **Matt Pocock Skills (`mattpocock/skills`)**: Complete engineering workflow including `/ask-matt`, `/tdd`, `/implement`, `/code-review`, `/wayfinder`, `/diagnosing-bugs`, `/codebase-design`, `/grill-with-docs`, etc.
-- **Trajectonomics Internal Skills (`trajectonomics-lab/internal-skills`)**: Organization-specific workflow including `/pick-the-issue` to discover unblocked GitHub issues not currently handled by active T3 Code sessions and route them into the `ask-matt` framework.
+- **Trajectonomics Internal Skills (`trajectonomics/internal-skills`)**: Organization-specific workflow including `/pick-the-issue` to discover unblocked GitHub issues not currently handled by active T3 Code sessions and route them into the `ask-matt` framework.
 
 ### Reviewing a diff
 
@@ -37,14 +37,14 @@ Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/ag
 
 ### Installing and updating skills
 
-Skills come from [`mattpocock/skills`](https://github.com/mattpocock/skills) and [`trajectonomics-lab/internal-skills`](https://github.com/trajectonomics-lab/internal-skills) via the Vercel [`skills`](https://github.com/vercel-labs/skills) CLI and are pinned in `skills-lock.json`. The canonical copy is `.agents/skills/` (read natively by Codex, OpenCode, Pi, and Antigravity CLI); `.claude/skills/` holds symlinks into it for Claude Code. Never edit them by hand.
+Skills come from [`mattpocock/skills`](https://github.com/mattpocock/skills) and [`trajectonomics/internal-skills`](https://github.com/trajectonomics/internal-skills) via the Vercel [`skills`](https://github.com/vercel-labs/skills) CLI and are pinned in `skills-lock.json`. The canonical copy is `.agents/skills/` (read natively by Codex, OpenCode, Pi, and Antigravity CLI); `.claude/skills/` holds symlinks into it for Claude Code. Never edit them by hand.
 
 - Update: `bun run skills:update` (or `npx skills update -p -y`)
 - Check status: `bun run skills:check` (or `npx skills check`)
 - Reinstall:
   ```bash
   npx skills add mattpocock/skills --skill '*' -a claude-code codex opencode antigravity-cli pi -y
-  npx skills add trajectonomics-lab/internal-skills -y
+  npx skills add trajectonomics/internal-skills -y
   ```
 - Restore from the lock: `npx skills experimental_install`
 

@@ -104,7 +104,7 @@
       "computedHash": "6397731ced114f3657aa88b55ed13d1344a56d77ca449c568e3200c21740fa99"
     },
     "pick-the-issue": {
-      "source": "trajectonomics-lab/internal-skills",
+      "source": "trajectonomics/internal-skills",
       "sourceType": "github",
       "skillPath": "skills/pick-the-issue/SKILL.md",
       "computedHash": "4dadf9a0aebfa7071442a2db2b5271239eeb4280e6f3c00c554f90ca39fe31fb"

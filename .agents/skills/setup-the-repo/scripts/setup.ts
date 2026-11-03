@@ -1,5 +1,5 @@
 /**
- * Interactive repository bootstrapper for Trajectonomics Lab templates.
+ * Interactive repository bootstrapper for Trajectonomics templates.
  * Customizes package coordinates, README, GLOSSARY, AGENTS.md, CODING_STANDARDS,
  * workflows, and initial starter code, verifies build with `bun run check`,
  * self-destructs this setup skill, and reminds the user to run /setup-matt-pocock-skills.
@@ -56,7 +56,7 @@ async function inferDefaultRepoName(): Promise<string> {
 	}
 	const cwd = process.cwd()
 	const dirName = cwd.split("/").pop() || "my-repo"
-	return `trajectonomics-lab/${dirName}`
+	return `trajectonomics/${dirName}`
 }
 
 async function promptUser(rl: readline.Interface, question: string, defaultVal: string): Promise<string> {
@@ -67,7 +67,7 @@ async function promptUser(rl: readline.Interface, question: string, defaultVal: 
 async function collectAnswersInteractive(): Promise<SetupAnswers> {
 	const rl = readline.createInterface({ input, output })
 
-	console.log("\n🚀 Welcome to Trajectonomics Lab Repository Setup!")
+	console.log("\n🚀 Welcome to Trajectonomics Repository Setup!")
 	console.log("This wizard will customize your repository and set up all tools.\n")
 
 	const defaultRepo = await inferDefaultRepoName()
@@ -83,7 +83,7 @@ async function collectAnswersInteractive(): Promise<SetupAnswers> {
 	const description = await promptUser(
 		rl,
 		"3. Short Description",
-		"High-performance TypeScript component for Trajectonomics Lab",
+		"High-performance TypeScript component for Trajectonomics",
 	)
 
 	console.log("\n4. Select Project Archetype:")
@@ -403,7 +403,7 @@ ${answers.description}
 [![CI](https://github.com/${answers.repoName}/actions/workflows/ci.yml/badge.svg)](https://github.com/${answers.repoName}/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-Part of the [Trajectonomics Lab](https://github.com/trajectonomics-lab) ecosystem.
+Part of the [Trajectonomics](https://github.com/trajectonomics) ecosystem.
 
 ---
 
@@ -496,7 +496,7 @@ Accepted
 ## Context
 
 \`${answers.repoName}\` is established to provide ${answers.description}.
-It is built with Bun, TypeScript, and Biome under the Trajectonomics Lab architectural guidelines.
+It is built with Bun, TypeScript, and Biome under the Trajectonomics architectural guidelines.
 
 ## Decision
 
@@ -619,7 +619,7 @@ async function main(): Promise<void> {
 	})
 
 	// Guard against running accidentally inside the template repository itself
-	if (remoteUrl.includes("trajectonomics-lab/technical-template") && !values.force) {
+	if (remoteUrl.includes("trajectonomics/technical-template") && !values.force) {
 		console.error("🛑 Refusing to run bootstrap setup on the template source repository itself!")
 		console.error("   To test setup, clone or instantiate a new repository from this template.")
 		console.error("   (Or pass --force if you specifically intend to overwrite the template repository.)")
@@ -632,7 +632,7 @@ async function main(): Promise<void> {
 	if (!isInteractive || values.name) {
 		const repoName = (values.name as string) || (await inferDefaultRepoName())
 		const packageName = (values.pkg as string) || `@trajectonomics/${repoName.split("/").pop()}`
-		const description = (values.description as string) || "TypeScript module for Trajectonomics Lab"
+		const description = (values.description as string) || "TypeScript module for Trajectonomics"
 		const rawArch = (values.archetype as string) || "core"
 		const archetype = (["core", "cli", "service", "minimal"].includes(rawArch)
 			? rawArch

@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Pick The Issue
 
-Pick the next highest-leverage, unblocked GitHub issue across Trajectonomics Lab repositories that has no active T3 Code session working on it, provide a concise executive summary, and route it through Matt Pocock's skills framework (`ask-matt`) to advise on the exact commands and workflow.
+Pick the next highest-leverage, unblocked GitHub issue across Trajectonomics repositories that has no active T3 Code session working on it, provide a concise executive summary, and route it through Matt Pocock's skills framework (`ask-matt`) to advise on the exact commands and workflow.
 
 ## Overview
 

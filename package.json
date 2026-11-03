@@ -1,11 +1,11 @@
 {
 	"name": "@trajectonomics/technical-template",
 	"version": "0.0.0-development",
-	"description": "Standard technical repository template for Trajectonomics Lab libraries and services",
+	"description": "Standard technical repository template for Trajectonomics libraries and services",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/trajectonomics-lab/technical-template.git"
+		"url": "git+https://github.com/trajectonomics/cicd.git"
 	},
 	"type": "module",
 	"sideEffects": false,

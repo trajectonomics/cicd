@@ -1,12 +1,12 @@
 ---
 name: setup-the-repo
-description: "Interactive questionnaire and automated bootstrapper to customize a new repository created from trajectonomics-lab/technical-template. Sets up package metadata, README, CI workflows, GLOSSARY, AGENTS rules, and starter code, self-destructs the setup skill, and instructs setting up Matt Pocock's skills."
+description: "Interactive questionnaire and automated bootstrapper to customize a new repository created from trajectonomics/technical-template. Sets up package metadata, README, CI workflows, GLOSSARY, AGENTS rules, and starter code, self-destructs the setup skill, and instructs setting up Matt Pocock's skills."
 disable-model-invocation: true
 ---
 
 # Setup The Repo
 
-Interactive repository bootstrapper and customizer for new repositories created from `trajectonomics-lab/technical-template`.
+Interactive repository bootstrapper and customizer for new repositories created from `trajectonomics/technical-template`.
 
 This is a **single-use bootstrap skill**: it conducts an interactive interview to discover what you really need for the new project, customizes all files, proves the build and tests pass, **self-destructs (removes this setup skill completely)**, and instructs you to run `/setup-matt-pocock-skills` to complete the engineering agent setup.
 
@@ -27,7 +27,7 @@ bun .agents/skills/setup-the-repo/scripts/setup.ts
 
 # Non-interactive / scripted with flags:
 bun .agents/skills/setup-the-repo/scripts/setup.ts \
-  --name "trajectonomics-lab/my-project" \
+  --name "trajectonomics/my-project" \
   --pkg "@trajectonomics/my-project" \
   --description "Deterministic projection engine" \
   --archetype core \
@@ -41,7 +41,7 @@ bun .agents/skills/setup-the-repo/scripts/setup.ts \
 If driven through an AI coding assistant session, the agent carries out this interactive protocol:
 
 #### 1. Explore Current Context
-- Inspect `git remote get-url origin` to infer the GitHub repository name (`trajectonomics-lab/<repo>`).
+- Inspect `git remote get-url origin` to infer the GitHub repository name (`trajectonomics/<repo>`).
 - Inspect current folder name.
 - Read existing `package.json`.
 
@@ -49,7 +49,7 @@ If driven through an AI coding assistant session, the agent carries out this int
 Ask the user the following questions concisely (with smart defaults pre-filled):
 
 1. **Repository Identity**:
-   - GitHub Repository (`trajectonomics-lab/<name>`)
+   - GitHub Repository (`trajectonomics/<name>`)
    - Package Name (`@trajectonomics/<name>`)
    - One-line Description
 

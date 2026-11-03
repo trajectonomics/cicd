@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Trajectonomics Lab repositories rely on clear architectural boundaries, strict pure functional cores, and autonomous AI coding agents operating across shared context. AI agents read domain concepts from `GLOSSARY.md` and architectural constraints from `docs/adr/`.
+Trajectonomics repositories rely on clear architectural boundaries, strict pure functional cores, and autonomous AI coding agents operating across shared context. AI agents read domain concepts from `GLOSSARY.md` and architectural constraints from `docs/adr/`.
 
 ## Decision
 
