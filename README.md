@@ -55,8 +55,26 @@ jobs:
     uses: trajectonomics/cicd/.github/workflows/pr-title.yml@v1
 ```
 
+```yaml
+# .github/workflows/release.yml  (keep this filename: npm trusted publishing validates it)
+name: Release
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**/*.md", ".agents/**", ".claude/**", ".github/**"]
+  release:
+    types: [published]
+permissions:
+  contents: write
+  id-token: write
+jobs:
+  publish:
+    uses: trajectonomics/cicd/.github/workflows/publish.yml@v1
+```
+
 `check.yml` installs Bun, runs `bun install --frozen-lockfile`, then `bun run check`. It takes
 optional `bun-version` and `script` inputs. `pr-title.yml` requires a conventional-commit PR title.
+`publish.yml` is described under Releasing.
 
 ## Development
 
@@ -71,11 +89,25 @@ against it, so they exercise the same resolution path a consuming repo uses.
 
 ## Releasing
 
-PR titles are conventional commits because they pick the next version (`feat:` minor, `feat!:`
-major, anything else patch). Merges to `main` that change package files publish an alpha
-(dist-tag `alpha`). Running the **Release** workflow by hand on `main` publishes a stable version
-(dist-tag `latest`), creates the `vX.Y.Z` tag and GitHub release, and moves the floating `vX` tag
-that consumers pin to. To cut `1.0.0`, run it with `bump` set to `major`.
+Every package uses the shared `publish.yml`, so releasing works the same everywhere:
+
+| You do | Result |
+| --- | --- |
+| Merge to `main` (package files changed) | Publishes an **alpha**, e.g. `1.2.0-alpha.3`, dist-tag `alpha` |
+| Publish a **GitHub Release** with a new tag `vX.Y.Z` on `main` | Publishes **stable** `X.Y.Z`, dist-tag `latest` |
+
+The release tag is the version; `package.json` `version` is never edited by hand. Alphas count up
+from the last stable tag, and PR titles are conventional commits because they pick the alpha's base
+(`feat:` minor, `feat!:` major, anything else patch). A release tag must look like `v1.2.3` and be on
+`main`, or the run fails before publishing.
+
+In this repo a stable release also moves the floating `vX` tag that consumers pin to.
+
+**New package, one time:** publish the first version by hand (`npm version 0.1.0-alpha.0
+--no-git-tag-version`, then `npm publish --access public --tag alpha --provenance=false`, then
+`git checkout package.json`). Then add a Trusted Publisher on npmjs.com: GitHub Actions, your
+repository, workflow `release.yml`, **allow publish directly**, no environment. It must be validated by
+one successful CI publish within two days.
 
 ## Documentation
 
