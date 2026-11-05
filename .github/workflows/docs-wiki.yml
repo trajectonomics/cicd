@@ -1,0 +1,62 @@
+name: Docs wiki mirror
+
+# Reusable: other repos call this with
+#   uses: trajectonomics/cicd/.github/workflows/docs-wiki.yml@v1
+# The calling repo needs `permissions: contents: write`.
+#
+# Mirrors README.md, GLOSSARY.md, docs/adr and docs/runbooks to the repo's GitHub wiki. The repo
+# stays the only source of truth: the wiki is a read-only copy, overwritten on every run.
+# Private repos skip this job (see trajectonomics/cicd#3).
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: docs-wiki-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    name: Mirror docs to wiki
+    # In a reusable workflow, github.event is the caller's event payload.
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Mirror
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          wiki_url="https://x-access-token:${GH_TOKEN}@github.com/${REPO}.wiki.git"
+
+          # The wiki repo exists only after Wikis is enabled and a first page has been created.
+          if ! git ls-remote --exit-code "$wiki_url" >/dev/null 2>&1; then
+            echo "::notice::Wiki is not enabled or has no first page yet. Skipping mirror."
+            exit 0
+          fi
+
+          git clone --quiet "$wiki_url" wiki
+          find wiki -mindepth 1 -maxdepth 1 -not -name .git -exec rm -rf {} +
+
+          [ -f README.md ] && cp README.md wiki/Home.md
+          [ -f GLOSSARY.md ] && cp GLOSSARY.md wiki/Glossary.md
+          for f in docs/adr/*.md; do cp "$f" "wiki/ADR-$(basename "$f")"; done
+          for f in docs/runbooks/*.md; do cp "$f" "wiki/Runbook-$(basename "$f")"; done
+
+          cd wiki
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Wiki already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --quiet -m "docs: mirror ${GITHUB_SHA::7} from main"
+          git push --quiet origin HEAD
