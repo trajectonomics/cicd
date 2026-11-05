@@ -1,88 +1,120 @@
-# @trajectonomics/technical-template
+# @trajectonomics/tooling
 
-The official starter repository template for technical packages, libraries, and services across [Trajectonomics](https://github.com/trajectonomics).
+Shared Biome and TypeScript presets, a GritQL plugin, and reusable GitHub Actions workflows for Trajectonomics.
 
-## Highlights
+[![Check](https://github.com/trajectonomics/cicd/actions/workflows/check.yml/badge.svg)](https://github.com/trajectonomics/cicd/actions/workflows/check.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-- **Interactive Repo Setup**: Includes the single-use `/setup-the-repo` skill (or `bun run setup`) that interactively customizes package metadata, README, GLOSSARY, CI workflows, and starter code for your archetype, self-destructs to leave a clean repo, and prompts setting up Matt Pocock's skills.
-- **AI Agent Skills Ready**: Bundled with [Matt Pocock's skills](https://github.com/mattpocock/skills) (`ask-matt`, `tdd`, `implement`, `wayfinder`, `code-review`, etc.) and Trajectonomics [internal skills](https://github.com/trajectonomics/internal-skills) (`pick-the-issue`) managed via `skills-lock.json`. Compatible with Claude Code, Codex, OpenCode, Antigravity CLI, and Pi.
-- **Bun First**: Built on [Bun](https://bun.sh) (`1.4.4`) for blazing fast testing, installs, and script execution.
-- **Dual ESM + CJS Output**: Powered by [`tsdown`](https://github.com/sxzz/tsdown) with full `.d.ts` and `.d.mts` declaration generation.
-- **Strict Verification Pipeline**: Biome linting and formatting (with strict file line ceilings and cognitive complexity limits), strict TypeScript compilation with `isolatedDeclarations`, tests via `bun test`, plus package export verification via [`publint`](https://publint.dev) and [`@arethetypeswrong/cli`](https://github.com/arethetypeswrong/arethetypeswrong).
-- **Automated Semver & Releases**: Git-tag-driven version computation (`scripts/version.ts`), automated conventional commit PR title validation, and GitHub Actions publishing workflow.
-- **Domain Modeling & ADRs**: Pre-structured `GLOSSARY.md`, Architecture Decision Records (`docs/adr/`), and agent operational guides (`docs/agents/`).
+This package ships config files only: no JavaScript. Each consuming repo keeps its own pinned
+`@biomejs/biome` (2.6 or later) and `typescript`.
 
----
+## Install
 
-## Quick Start
-
-### 1. Create a Repository from this Template
-
-Using GitHub CLI:
 ```bash
-gh repo create trajectonomics/<new-repo-name> \
-  --template trajectonomics/technical-template \
-  --public \
-  --clone
+bun add -d --exact @trajectonomics/tooling @biomejs/biome typescript
 ```
 
-Or click **"Use this template"** on GitHub at [trajectonomics/technical-template](https://github.com/trajectonomics/technical-template).
+## Presets
 
-### 2. Run Interactive Setup
+| Preset | Use in | What it gives you |
+| --- | --- | --- |
+| `configs/base` | `biome.json` `extends` | Tabs, line width 100, 100 lines per file (200 in tests), complexity 10, import sorting, unused-code and `any` errors |
+| `configs/deterministic` | `biome.json` `extends` | Everything in `base`, plus the no-nondeterminism rule |
+| `tsconfig/base.json` | `tsconfig.json` `extends` | Strict ES2022 settings with `isolatedDeclarations` |
 
-Inside your newly cloned repository, run the interactive setup wizard:
+```jsonc
+// biome.json
+{ "root": true, "extends": ["@trajectonomics/tooling/configs/deterministic"] }
+```
+
+```jsonc
+// tsconfig.json
+{ "extends": "@trajectonomics/tooling/tsconfig/base.json", "include": ["src"] }
+```
+
+The no-nondeterminism rule rejects `Math.pow`, `exp`, `expm1`, `log`, `log1p`, `log2`, `log10`,
+`random`, and any use of `Date`. Use it in pure-core packages; use `configs/base` elsewhere.
+
+## Reusable workflows
+
+```yaml
+# .github/workflows/check.yml
+on: [push, pull_request]
+jobs:
+  check:
+    uses: trajectonomics/cicd/.github/workflows/check.yml@v1
+```
+
+```yaml
+# .github/workflows/pr-title.yml
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+jobs:
+  title:
+    uses: trajectonomics/cicd/.github/workflows/pr-title.yml@v1
+```
+
+```yaml
+# .github/workflows/release.yml  (keep this filename: npm trusted publishing validates it)
+name: Release
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**/*.md", ".agents/**", ".claude/**", ".github/**"]
+  release:
+    types: [published]
+permissions:
+  contents: write
+  id-token: write
+jobs:
+  publish:
+    uses: trajectonomics/cicd/.github/workflows/publish.yml@v1
+```
+
+`check.yml` installs Bun, runs `bun install --frozen-lockfile`, then `bun run check`. It takes
+optional `bun-version` and `script` inputs. `pr-title.yml` requires a conventional-commit PR title.
+`publish.yml` is described under Releasing.
+
+## Development
 
 ```bash
 bun install
-bun run setup
+bun run check   # lint, typecheck, tests, publint
+bun run format  # fix formatting and import order
 ```
 
-*Or within an AI agent session (Claude Code, Antigravity, OpenCode, etc.):*
-```
-/setup-the-repo
-```
+The tests install a copy of the published files into a temporary project and run Biome and `tsc`
+against it, so they exercise the same resolution path a consuming repo uses.
 
-The interactive wizard will:
-1. Ask you for your repository coordinates, project description, archetype (Pure Domain Library, CLI Tool, Service/Worker, or Minimal Starter), and initial domain terms.
-2. Customize `package.json`, `README.md`, `GLOSSARY.md`, `AGENTS.md`, `CODING_STANDARDS.md`, `docs/adr/`, and `src/`.
-3. Verify your new repository via `bun run check`.
-4. **Self-destruct**: automatically delete the single-use `setup-the-repo` bootstrap skill so your repository stays clean.
-5. Remind you to run `/setup-matt-pocock-skills` to wire up GitHub Issues and triage labels!
+## Releasing
 
----
+Every package uses the shared `publish.yml`, so releasing works the same everywhere:
 
-## Available Scripts
+| You do | Result |
+| --- | --- |
+| Merge to `main` (package files changed) | Publishes an **alpha**, e.g. `1.2.0-alpha.3`, dist-tag `alpha` |
+| Publish a **GitHub Release** with a new tag `vX.Y.Z` on `main` | Publishes **stable** `X.Y.Z`, dist-tag `latest` |
 
-| Script | Command | Purpose |
-| --- | --- | --- |
-| `bun run setup` | `bun .agents/skills/setup-the-repo/scripts/setup.ts` | Interactive repository bootstrap wizard |
-| `bun run check` | Lint + Typecheck + Test + Build + Package Lint | Full CI verification pass |
-| `bun run test` | `bun test` | Run test suite with Bun test runner |
-| `bun run typecheck` | `tsc -p tsconfig.json && tsc -p tsconfig.test.json` | Strict TypeScript typecheck |
-| `bun run lint` | `biome ci --error-on-warnings .` | Check formatting and lint rules |
-| `bun run format` | `biome check --write .` | Auto-format files and organize imports |
-| `bun run build` | `tsdown` | Compile dual ESM/CJS build into `dist/` |
-| `bun run lint:package`| `publint --strict && attw --pack . --profile node16` | Validate package exports & types |
-| `bun run skills:check`| `bunx skills@latest check` | Verify installed agent skills against lockfile |
-| `bun run skills:update`| `bunx skills@latest update` | Update installed skills to latest versions |
+The release tag is the version; `package.json` `version` is never edited by hand. Alphas count up
+from the last stable tag, and PR titles are conventional commits because they pick the alpha's base
+(`feat:` minor, `feat!:` major, anything else patch). A release tag must look like `v1.2.3` and be on
+`main`, or the run fails before publishing.
 
----
+In this repo a stable release also moves the floating `vX` tag that consumers pin to.
 
-## Skills Architecture
+**New package, one time:** publish the first version by hand (`npm version 0.1.0-alpha.0
+--no-git-tag-version`, then `npm publish --access public --tag alpha --provenance=false`, then
+`git checkout package.json`). Then add a Trusted Publisher on npmjs.com: GitHub Actions, your
+repository, workflow `release.yml`, **allow publish directly**, no environment. It must be validated by
+one successful CI publish within two days.
 
-Skills are pinned in `skills-lock.json`:
-- Canonical skill files live in `.agents/skills/`.
-- Claude Code symlinks live in `.claude/skills/`.
-- Managed using the Vercel `skills` CLI:
-  ```bash
-  # Check skills status
-  bun run skills:check
+## Documentation
 
-  # Update pinned skills
-  bun run skills:update
-  ```
-
----
+- [GLOSSARY.md](./GLOSSARY.md): domain terms.
+- [AGENTS.md](./AGENTS.md): rules for AI coding agents.
+- [CODING_STANDARDS.md](./CODING_STANDARDS.md): review conventions.
+- [docs/adr/](./docs/adr/): architecture decisions.
 
 ## License
 

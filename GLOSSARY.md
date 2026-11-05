@@ -1,23 +1,17 @@
-# Domain Glossary
+# Domain Glossary: @trajectonomics/tooling
 
-Ubiquitous language for this repository. Every concept named here has an exact definition that code, tests, commit messages, and PR titles must use. Synonyms in a diff are defects.
-
-## Template Guide
-
-When instantiating a new repository from this template:
-1. Define your core domain entities, value objects, and states below.
-2. In single-context repositories, maintain this single `GLOSSARY.md` at repo root.
-3. In multi-context repositories, place `GLOSSARY-MAP.md` at root pointing to each sub-context's `GLOSSARY.md`.
-
----
+Ubiquitous language for `trajectonomics/cicd`. Every term defined here is binding across code, tests, documentation, and PR titles. Synonyms in a diff are defects.
 
 ## Core Terms
 
+### Preset
+A shareable, versioned configuration file (Biome or TypeScript) that consuming repositories extend instead of copying. Published under `@trajectonomics/tooling/<tool>/<name>`.
+
+### Reusable Workflow
+A GitHub Actions workflow in `.github/workflows/` exposed through `workflow_call` and consumed by other repositories, pinned to a floating major tag (e.g. `@v1`).
+
+### Non-determinism Plugin
+A GritQL plugin (`no-nondeterminism.grit`) that rejects clocks, randomness, and other non-deterministic constructs in pure-core code. Bundled by the `deterministic` Preset.
+
 ### Invariant
-A rule or condition that must hold true at all times across all state transitions within this system.
-
-### Pure Core
-The isolated domain logic of a package that executes deterministically without I/O, network calls, filesystem access, system clock dependencies, or global mutable state.
-
-### Error Code
-A strictly typed, distinct machine-readable identifier assigned to every rejection rule across the package API.
+A rule or condition that must hold true across all state transitions in this system.

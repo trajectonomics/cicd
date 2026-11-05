@@ -4,9 +4,13 @@ name: PR title
 # reads those subjects to pick the next version. So the title must be a
 # conventional commit: feat: -> minor, feat!: / BREAKING CHANGE -> major,
 # anything else -> patch.
+#
+# Reusable: other repos call this from their own pull_request workflow with
+#   uses: trajectonomics/cicd/.github/workflows/pr-title.yml@v1
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
+  workflow_call:
 
 jobs:
   conventional:
