@@ -62,14 +62,20 @@ on:
   push:
     branches: [main]
     paths-ignore: ["**/*.md", ".agents/**", ".claude/**", ".github/**"]
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      bump:
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
 permissions:
   contents: write
   id-token: write
 jobs:
   publish:
     uses: trajectonomics/cicd/.github/workflows/publish.yml@v1
+    with:
+      bump: ${{ inputs.bump || 'auto' }}
 ```
 
 `check.yml` installs Bun, runs `bun install --frozen-lockfile`, then `bun run check`. It takes
@@ -94,12 +100,15 @@ Every package uses the shared `publish.yml`, so releasing works the same everywh
 | You do | Result |
 | --- | --- |
 | Merge to `main` (package files changed) | Publishes an **alpha**, e.g. `1.2.0-alpha.3`, dist-tag `alpha` |
-| Publish a **GitHub Release** with a new tag `vX.Y.Z` on `main` | Publishes **stable** `X.Y.Z`, dist-tag `latest` |
+| Run the **Release** workflow on `main` (Actions tab, Run workflow) | Publishes **stable**, dist-tag `latest`, then creates the tag `vX.Y.Z` and the GitHub release |
 
-The release tag is the version; `package.json` `version` is never edited by hand. Alphas count up
-from the last stable tag, and PR titles are conventional commits because they pick the alpha's base
-(`feat:` minor, `feat!:` major, anything else patch). A release tag must look like `v1.2.3` and be on
-`main`, or the run fails before publishing.
+The workflow computes the version; `package.json` `version` is never edited by hand. `bump = auto`
+reads the conventional-commit PR titles since the last stable tag (`feat:` minor, `feat!:` major,
+anything else patch); choose `major` to cut `1.0.0`. The tag and GitHub release are created only
+after npm accepts the version, so a failed publish leaves nothing behind. Run it from `main`;
+any other branch fails before publishing.
+
+From the command line: `gh workflow run release.yml --ref main -f bump=auto`.
 
 In this repo a stable release also moves the floating `vX` tag that consumers pin to.
 

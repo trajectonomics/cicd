@@ -3,11 +3,12 @@ name: Release
 # Thin caller: the publishing logic lives in publish.yml, shared by every package.
 # npm trusted publishing validates THIS file's name, so keep it called release.yml.
 #
-#   push to main      -> publishes an alpha (dist-tag "alpha")
-#   GitHub release    -> publishes the stable version from the tag (dist-tag "latest")
+#   push to main    -> publishes an alpha (dist-tag "alpha")
+#   Run workflow    -> publishes a stable version (dist-tag "latest"), then creates the
+#                      tag vX.Y.Z and the GitHub release. Run it from main.
 #
-# To release: create a GitHub release on main with a new tag vX.Y.Z. The tag is
-# the version; package.json "version" is never edited by hand.
+# package.json "version" is never edited by hand. bump = auto reads commit messages
+# since the last release; pick major to cut 1.0.0.
 on:
   push:
     branches: [main]
@@ -16,8 +17,13 @@ on:
       - ".agents/**"
       - ".claude/**"
       - ".github/**"
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump. auto reads commit messages since the last release.
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
 
 permissions:
   contents: write
@@ -27,6 +33,7 @@ jobs:
   publish:
     uses: ./.github/workflows/publish.yml
     with:
+      bump: ${{ inputs.bump || 'auto' }}
       tooling-ref: ${{ github.sha }}
       float-major-tag: true
     secrets: inherit
