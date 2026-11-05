@@ -1,7 +1,7 @@
 {
-	"name": "@trajectonomics/technical-template",
+	"name": "@trajectonomics/tooling",
 	"version": "0.0.0-development",
-	"description": "Standard technical repository template for Trajectonomics libraries and services",
+	"description": "Shared Biome and TypeScript presets, GritQL plugins, and reusable GitHub Actions workflows for Trajectonomics",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -38,7 +38,6 @@
 		"tag": "latest"
 	},
 	"scripts": {
-		"setup": "bun .agents/skills/setup-the-repo/scripts/setup.ts",
 		"build": "tsdown",
 		"test": "bun test",
 		"typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json",

@@ -1,17 +1,7 @@
-/** Basic metadata describing a repository package initialized from this template. */
-export interface TemplateInfo {
-	readonly name: string
-	readonly version: string
-	readonly initialized: boolean
-}
-
 /**
- * Returns package information verifying the template structure is operational.
+ * Minimal module for @trajectonomics/tooling.
  */
-export function getTemplateInfo(): TemplateInfo {
-	return Object.freeze({
-		name: "@trajectonomics/technical-template",
-		version: "0.0.0-development",
-		initialized: true,
-	})
+
+export function greeting(name: string = "World"): string {
+	return `Hello, ${name.trim()}!`
 }
