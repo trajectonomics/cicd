@@ -1,0 +1,9 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/manifest_schema.json",
+	"version": 1,
+	"configs": [{ "base": "./biome/base.json" }, { "deterministic": "./biome/deterministic.json" }],
+	"plugins": {
+		"rules": [{ "noNondeterminism": "./plugins/no-nondeterminism.grit" }],
+		"presets": { "deterministic": ["noNondeterminism"] }
+	}
+}

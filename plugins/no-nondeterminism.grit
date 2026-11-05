@@ -1,0 +1,16 @@
+language js
+
+or {
+	`Math.pow($args)`,
+	`Math.exp($args)`,
+	`Math.expm1($args)`,
+	`Math.log($args)`,
+	`Math.log1p($args)`,
+	`Math.log2($args)`,
+	`Math.log10($args)`,
+	`Math.random($args)`,
+	`Date.$member`,
+	`new Date($args)`
+} as $call where {
+	register_diagnostic(span=$call, message="Nondeterministic API: Math.pow/exp/log/random can differ between JavaScript engines (V8 vs JavaScriptCore), and Date reads the wall clock. Pass values and time in as arguments instead.", severity="error")
+}
