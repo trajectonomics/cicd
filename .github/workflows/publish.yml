@@ -8,17 +8,24 @@ name: Publish
 #     push:
 #       branches: [main]
 #       paths-ignore: ["**/*.md", ".agents/**", ".claude/**", ".github/**"]
-#     release:
-#       types: [published]
+#     workflow_dispatch:
+#       inputs:
+#         bump:
+#           type: choice
+#           options: [auto, patch, minor, major]
+#           default: auto
 #   permissions:
 #     contents: write
 #     id-token: write
 #   jobs:
 #     publish:
 #       uses: trajectonomics/cicd/.github/workflows/publish.yml@v1
+#       with:
+#         bump: ${{ inputs.bump || 'auto' }}
 #
-# push to main     -> alpha  (dist-tag "alpha"), version from scripts/version.ts
-# release published -> stable (dist-tag "latest"), version is the release tag vX.Y.Z
+# push to main      -> alpha  (dist-tag "alpha"), version from scripts/version.ts
+# manual dispatch   -> stable (dist-tag "latest"): computes the version, publishes to npm,
+#                      then creates the tag vX.Y.Z and the GitHub release
 #
 # npm trusted publishing validates the CALLING workflow: configure the package's
 # Trusted Publisher with the caller's repository and filename (release.yml), and
@@ -34,6 +41,10 @@ on:
         description: Ref of trajectonomics/cicd that supplies scripts/. Use the ref you pin this workflow to.
         type: string
         default: v1
+      bump:
+        description: "Stable version bump: auto reads commit messages since the last release."
+        type: string
+        default: auto
       float-major-tag:
         description: After a stable release, move the floating major tag (v1) to it.
         type: boolean
@@ -56,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EVENT: ${{ github.event_name }}
-      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      BUMP: ${{ inputs.bump }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -69,12 +80,11 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - name: Stable releases must come from main
-        if: env.EVENT == 'release'
+      - name: Stable releases must run on main
+        if: env.EVENT == 'workflow_dispatch' && github.ref != 'refs/heads/main'
         run: |
-          git fetch origin main
-          git merge-base --is-ancestor "$GITHUB_SHA" origin/main \
-            || { echo "::error::Release $RELEASE_TAG is not on main. Publish releases from main only."; exit 1; }
+          echo "::error::Run the stable release from main, not $GITHUB_REF."
+          exit 1
 
       - run: bun install --frozen-lockfile
       - run: bun run check
@@ -94,12 +104,9 @@ jobs:
       - name: Plan and compute version
         id: plan
         run: |
-          PLAN=$(bun "$RUNNER_TEMP/cicd-scripts/release-plan.ts" --event "$EVENT" --tag "$RELEASE_TAG")
+          PLAN=$(bun "$RUNNER_TEMP/cicd-scripts/release-plan.ts" --event "$EVENT")
           CHANNEL=$(echo "$PLAN" | jq -r .channel)
-          VERSION=$(echo "$PLAN" | jq -r '.version // empty')
-          if [ -z "$VERSION" ]; then
-            VERSION=$(bun "$RUNNER_TEMP/cicd-scripts/version.ts" --channel "$CHANNEL")
-          fi
+          VERSION=$(bun "$RUNNER_TEMP/cicd-scripts/version.ts" --channel "$CHANNEL" --bump "${BUMP:-auto}")
           echo "Publishing $VERSION ($CHANNEL)"
           echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
           echo "dist_tag=$(echo "$PLAN" | jq -r .distTag)" >> "$GITHUB_OUTPUT"
@@ -120,6 +127,14 @@ jobs:
             npm config set //registry.npmjs.org/:_authToken "$NODE_AUTH_TOKEN"
           fi
           npm publish --tag "$DIST_TAG" --provenance
+
+      # Tag and release only after npm accepted the version, so a failed publish leaves no tag.
+      - name: Tag and GitHub release
+        if: steps.plan.outputs.channel == 'stable'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: gh release create "v$VERSION" --target "$GITHUB_SHA" --generate-notes
 
       # Consumers pin reusable workflows to a floating major tag, e.g. @v1.
       - name: Move floating major tag
