@@ -2,9 +2,9 @@ name: Release
 
 # Every push to main publishes an alpha (npm dist-tag "alpha"). Running this
 # workflow by hand on main publishes the stable version (dist-tag "latest"),
-# tags vX.Y.Z and creates a GitHub release. Versions are computed by
-# scripts/version.ts from git tags and commit messages; package.json "version"
-# is never edited by hand.
+# tags vX.Y.Z, moves the floating major tag (vX) and creates a GitHub release.
+# Versions are computed by scripts/version.ts from git tags and commit messages;
+# package.json "version" is never edited by hand.
 on:
   push:
     branches: [main]
@@ -64,20 +64,27 @@ jobs:
       - name: Upgrade npm for trusted publishing
         run: npm install -g npm@^11.5.1
 
+      # Uses NPM_TOKEN when the secret is set (needed for the very first publish of a
+      # new package); otherwise npm falls back to trusted publishing via OIDC.
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "NPM_TOKEN secret is not set. Skipping publish step."
-            exit 0
+          if [ -n "$NODE_AUTH_TOKEN" ]; then
+            npm config set //registry.npmjs.org/:_authToken "$NODE_AUTH_TOKEN"
           fi
-          npm config set //registry.npmjs.org/:_authToken "$NODE_AUTH_TOKEN"
           npm publish --tag "$DIST_TAG" --provenance
 
       - name: Tag and GitHub release
-        if: env.CHANNEL == 'stable' && env.NODE_AUTH_TOKEN != ''
+        if: env.CHANNEL == 'stable'
         run: gh release create "v${{ steps.version.outputs.version }}" --target "$GITHUB_SHA" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Consumers pin reusable workflows to a floating major tag, e.g. @v1.
+      - name: Move floating major tag
+        if: env.CHANNEL == 'stable'
+        run: |
+          MAJOR="v$(echo "${{ steps.version.outputs.version }}" | cut -d. -f1)"
+          git tag -f "$MAJOR" "$GITHUB_SHA"
+          git push -f origin "refs/tags/$MAJOR"

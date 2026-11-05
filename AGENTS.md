@@ -8,7 +8,7 @@ Instructions for AI coding agents in `trajectonomics/cicd` (`@trajectonomics/too
 2. Never commit secrets or `.env` files. `NPM_TOKEN` lives in repo secrets only.
 3. Package design: Keep core packages pure and deterministic wherever applicable (data in, data out, no I/O, no clock, no unseeded randomness). Keep boundaries closed-world with explicit contracts.
 4. Bun only: `bun install`, `bun test`, `bun run <script>`. Do not add npm/pnpm/yarn lockfiles.
-5. Done means `bun run check` passes (Biome lint with zero warnings, strict typecheck, tests, build, publint + are-the-types-wrong). `bun run format` fixes formatting and import order. Do not loosen `tsconfig.base.json` or `biome.json` to make an error go away.
+5. Done means `bun run check` passes (Biome lint with zero warnings, strict typecheck, tests, publint). `bun run format` fixes formatting and import order. Do not loosen the presets in `biome/` or `tsconfig/` to make an error go away: they are the product.
 6. Never edit `version` in `package.json` and never run `npm publish` locally. Merges to `main` publish alphas; a stable release is the manual Release workflow. PR titles are conventional commits (`feat:`, `fix:`, `feat!:` ...) because they decide the next version (see README "Releasing").
 
 ## Agent skills
