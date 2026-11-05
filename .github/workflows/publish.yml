@@ -123,6 +123,13 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           DIST_TAG: ${{ steps.plan.outputs.dist_tag }}
         run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          # Lets "Re-run failed jobs" finish the tag and release after a transient failure.
+          if npm view "$NAME@$VERSION" version > /dev/null 2>&1; then
+            echo "$NAME@$VERSION is already on npm; skipping publish."
+            exit 0
+          fi
           if [ -n "$NODE_AUTH_TOKEN" ]; then
             npm config set //registry.npmjs.org/:_authToken "$NODE_AUTH_TOKEN"
           fi
@@ -134,7 +141,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.plan.outputs.version }}
-        run: gh release create "v$VERSION" --target "$GITHUB_SHA" --generate-notes
+        run: |
+          if gh release view "v$VERSION" > /dev/null 2>&1; then
+            echo "Release v$VERSION already exists; skipping."
+            exit 0
+          fi
+          # GitHub's API fails transiently (HTTP 500); retry before giving up.
+          for attempt in 1 2 3; do
+            gh release create "v$VERSION" --target "$GITHUB_SHA" --generate-notes && exit 0
+            echo "Attempt $attempt failed; retrying."
+            sleep $((attempt * 5))
+          done
+          exit 1
 
       # Consumers pin reusable workflows to a floating major tag, e.g. @v1.
       - name: Move floating major tag
