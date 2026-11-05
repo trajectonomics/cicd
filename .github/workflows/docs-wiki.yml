@@ -6,7 +6,7 @@ name: Docs wiki mirror
 #
 # Mirrors README.md, GLOSSARY.md, docs/adr and docs/runbooks to the repo's GitHub wiki. The repo
 # stays the only source of truth: the wiki is a read-only copy, overwritten on every run.
-# Private repos skip this job (see trajectonomics/cicd#3).
+# Only public repos add the caller file; private repos do not use this job (trajectonomics/cicd#3).
 on:
   workflow_call:
 
@@ -20,8 +20,6 @@ concurrency:
 jobs:
   mirror:
     name: Mirror docs to wiki
-    # In a reusable workflow, github.event is the caller's event payload.
-    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
