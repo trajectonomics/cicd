@@ -78,9 +78,29 @@ jobs:
       bump: ${{ inputs.bump || 'auto' }}
 ```
 
+```yaml
+# .github/workflows/docs-wiki.yml  (public repos only)
+on:
+  push:
+    branches: [main]
+    paths: ["README.md", "GLOSSARY.md", "docs/**"]
+permissions:
+  contents: write
+jobs:
+  wiki:
+    uses: trajectonomics/cicd/.github/workflows/docs-wiki.yml@v1
+```
+
 `check.yml` installs Bun, runs `bun install --frozen-lockfile`, then `bun run check`. It takes
 optional `bun-version` and `script` inputs. `pr-title.yml` requires a conventional-commit PR title.
 `publish.yml` is described under Releasing.
+
+`docs-wiki.yml` mirrors `README.md` (as the wiki Home), `GLOSSARY.md`, `docs/adr/` and
+`docs/runbooks/` to the repo's GitHub wiki after a merge to `main`. The repo stays the only source of
+truth: the wiki is a read-only copy that is overwritten on every run, so never edit it by hand. Only
+public repos add it; private repos do not use this job. It skips quietly until the owner enables
+Wikis and creates a first page. Wiki pages are flat, so relative links between docs may not resolve
+there. The rule is decided in [#3](https://github.com/trajectonomics/cicd/issues/3).
 
 ## Development
 
