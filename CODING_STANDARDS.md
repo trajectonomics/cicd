@@ -1,36 +1,39 @@
 # Coding Standards
 
-Read at **review** time. `bun run check` already enforces the mechanical rules (formatting, strict
-types, tests, build, package shape). This file covers what it cannot: the conventions a reviewer
-must check by reading the diff.
+Read at **review** time. `bun run check` already enforces the mechanical rules (Biome formatting and
+lint, strict types, tests, publint, and actionlint on workflow changes). This file covers what it
+cannot: the judgement calls a reviewer must check by reading the diff.
 
-Decisions behind the API live in `docs/adr/`; vocabulary lives in `GLOSSARY.md`.
+This package is config only: presets, a plugin, and workflows. There is no runtime code to review.
+Decisions live in `docs/adr/`; vocabulary lives in `GLOSSARY.md`; release surprises live in
+`docs/runbooks/publishing.md`.
 
-## Public API
+## Presets
 
-- A new exported function or type carries a one-line JSDoc saying what it **is**, not how it works.
-- Values returned by constructors or domain factories are frozen. A caller-supplied object is never mutated.
-- A rule that can reject input gets its own domain error code enum/union. One code per rule: never widen an existing code's meaning, and never let two distinct rules share one.
-- A thrown error's `field` mirrors the caller's input path, never an internal variable name.
+- The presets are the product. A diff that relaxes a rule in `biome/` or `tsconfig/` to make an error go
+  away is a defect unless it carries its reason in the PR body.
+- A change to a preset ships with a test in `test/presets.test.ts` that fails without it, run through a
+  temporary consumer project.
+- A new exported file is added to `exports` and `files` in `package.json`, and to `biome-manifest.json`
+  when Biome should load it.
+- The GritQL plugin message names the rule and the fix, with no reference to a specific package.
 
-## Purity
+## Workflows
 
-- For core domain logic: no clock, randomness, `Date`, `fetch`, `process`, `Math.random`, or unseeded ID generation. IDs and dates arrive as arguments.
-- Closed world: avoid leaky callbacks, untyped config bags, or runtime hooks unless explicitly required by an adapter boundary.
-- Real-world cases that do not fit are addressed by new core primitives, not vague extension points.
+- `release.yml` stays a thin caller. Publishing logic goes into `publish.yml`, where every package
+  inherits the fix.
+- A new input on `publish.yml` has a default, so callers pinned to `@v1` keep working. Removing or
+  renaming an input is a breaking change and needs a new major tag.
+- Every step that talks to npm or GitHub tolerates a re-run: it checks the current state first, then acts.
+- Third-party actions are pinned to a major version or newer; download URLs name an exact version.
 
 ## Naming and Domain Language
 
 - Use `GLOSSARY.md` vocabulary strictly. Synonyms in a diff are considered defects.
-- When an API requires a unit or duration, make the unit explicit in the type and parameter name (e.g. `timeoutMs`, `cents`).
+- PR titles are conventional commits, because they decide the next version.
 
-## Tests
+## Scripts and Tests
 
-- One test per error condition, asserting `error.code` rather than merely that something threw.
-- A test name states the domain rule or invariant, not the internal function under test.
-- Property tests and parameterized tests are used for invariants that must hold across all valid inputs.
-
-## Files
-
-- One concern per file. The 100-line ceiling (200 for test files) is enforced by Biome. Split files as soon as multiple concerns arise.
-- `index.ts` remains a clean re-export list defining the package's public surface.
+- A test name states the rule or invariant, not the internal function under test.
+- One test per error condition, asserting on the message or code rather than merely that something threw.
+- Files stay under the Biome size ceiling (100 lines, 200 for tests). Split by concern.
