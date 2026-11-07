@@ -4,12 +4,12 @@ Instructions for AI coding agents in `trajectonomics/cicd` (`@trajectonomics/too
 
 ## Rules
 
-1. Never commit to `main`. Branch (`feat/*`, `fix/*`, `docs/*`) and open a PR.
+1. Never commit to `main`. Branch (`feat/*`, `fix/*`, `docs/*`) and open a PR. Before pushing to an existing PR branch, confirm `gh pr view --json state` is `OPEN`; after `git add`, read `git status --short` before committing.
 2. Never commit secrets or `.env` files. `NPM_TOKEN` lives in repo secrets only.
 3. Package design: Keep core packages pure and deterministic wherever applicable (data in, data out, no I/O, no clock, no unseeded randomness). Keep boundaries closed-world with explicit contracts.
 4. Bun only: `bun install`, `bun test`, `bun run <script>`. Do not add npm/pnpm/yarn lockfiles.
 5. Done means `bun run check` passes (Biome lint with zero warnings, strict typecheck, tests, publint). `bun run format` fixes formatting and import order. Do not loosen the presets in `biome/` or `tsconfig/` to make an error go away: they are the product.
-6. Never edit `version` in `package.json` (a first-publish bump stays uncommitted) and never run `npm publish` locally, except the very first publish of a brand-new package, which the maintainer may run locally with `--provenance=false`. Merges to `main` publish alphas; a stable release is the manual Release workflow, which tags and creates the GitHub release itself. PR titles are conventional commits (`feat:`, `fix:`, `feat!:` ...) because they decide the next version (see README "Releasing").
+6. Never edit `version` in `package.json` (a first-publish bump stays uncommitted) and never run `npm publish` locally, except the very first publish of a brand-new package, which the maintainer may run locally with `--provenance=false`. Merges to `main` publish alphas; a stable release is the manual Release workflow, which tags and creates the GitHub release itself. PR titles are conventional commits (`feat:`, `fix:`, `feat!:` ...) because they decide the next version (see README "Releasing"). A release that looks failed may not be: read `docs/runbooks/publishing.md` before diagnosing npm or release output.
 
 ## Agent skills
 
