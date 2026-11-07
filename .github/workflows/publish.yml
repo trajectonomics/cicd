@@ -108,9 +108,11 @@ jobs:
           CHANNEL=$(echo "$PLAN" | jq -r .channel)
           VERSION=$(bun "$RUNNER_TEMP/cicd-scripts/version.ts" --channel "$CHANNEL" --bump "${BUMP:-auto}")
           echo "Publishing $VERSION ($CHANNEL)"
-          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
-          echo "dist_tag=$(echo "$PLAN" | jq -r .distTag)" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          {
+            echo "channel=$CHANNEL"
+            echo "dist_tag=$(echo "$PLAN" | jq -r .distTag)"
+            echo "version=$VERSION"
+          } >> "$GITHUB_OUTPUT"
           npm version "$VERSION" --no-git-tag-version
 
       # Trusted publishing (OIDC) needs npm >= 11.5.1; setup-node 22 ships npm 10.x.
