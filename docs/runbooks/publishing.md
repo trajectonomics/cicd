@@ -24,7 +24,7 @@ Every package's `release.yml` is a thin caller of `publish.yml@v1`; no publish s
 - Pass `bump: ${{ inputs.bump || 'auto' }}` from a `workflow_dispatch` input, and `secrets: inherit`
   so the optional `NPM_TOKEN` fallback keeps working.
 - Set `float-major-tag: true` only when consumers pin `@vN` of that package; otherwise leave it off.
-- The package needs a `bun run check` script; the shared job runs it before publishing.
+- The package needs a `bun run check` script; the reusable workflow runs it before publishing.
 
 `test/workflows.test.ts` guards this contract in the repo's own caller and in the README template a
 new package copies.
