@@ -39,8 +39,9 @@ function documentedCallers(): Workflow[] {
 
 function expectThinCaller(workflow: Workflow, uses: string): void {
 	expect(workflow.permissions).toMatchObject({ "id-token": "write", contents: "write" })
-	expect(workflow.on.push).not.toBeNull()
+	expect(workflow.on.push).toMatchObject({ branches: ["main"] })
 	expect(workflow.on.workflow_dispatch?.inputs).toHaveProperty("bump")
+	expect(Object.keys(workflow.jobs)).toEqual(["publish"])
 	const job = workflow.jobs["publish"]
 	expect(job?.uses).toBe(uses)
 	expect(job?.with).toHaveProperty("bump")
@@ -64,7 +65,7 @@ describe("the release.yml template a new package copies from the README", () => 
 		expectThinCaller(callers[0]!, publishedCaller)
 	})
 
-	it("leaves the floating major tag off, because packages do not publish one", () => {
+	it("defaults the floating major tag to off", () => {
 		expect(callers[0]!.jobs["publish"]?.with).not.toHaveProperty("float-major-tag")
 	})
 })

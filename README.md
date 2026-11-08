@@ -82,9 +82,8 @@ jobs:
     secrets: inherit
 ```
 
-Every package keeps this file named `release.yml` and keeps it a thin caller: publishing steps belong
-in `publish.yml`. `secrets: inherit` keeps the optional `NPM_TOKEN` fallback working. The full caller
-contract is in `docs/runbooks/publishing.md`.
+Every package keeps this file named `release.yml` and keeps it a thin caller; publishing steps belong
+in `publish.yml`. The full caller contract is in `docs/runbooks/publishing.md`.
 
 ```yaml
 # .github/workflows/docs-wiki.yml  (public repos only)
