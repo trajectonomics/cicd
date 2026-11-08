@@ -22,6 +22,7 @@ name: Publish
 #       uses: trajectonomics/cicd/.github/workflows/publish.yml@v1
 #       with:
 #         bump: ${{ inputs.bump || 'auto' }}
+#       secrets: inherit
 #
 # push to main      -> alpha  (dist-tag "alpha"), version from scripts/version.ts
 # manual dispatch   -> stable (dist-tag "latest"): computes the version, publishes to npm,
