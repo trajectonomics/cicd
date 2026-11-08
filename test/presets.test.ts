@@ -22,6 +22,7 @@ function lint(config: string, source: string): { code: number; output: string } 
 
 const deterministic = '{"root":true,"extends":["@trajectonomics/tooling/configs/deterministic"]}'
 const base = '{"root":true,"extends":["@trajectonomics/tooling/configs/base"]}'
+const web = '{"root":true,"extends":["@trajectonomics/tooling/configs/web"]}'
 
 describe("deterministic preset", () => {
 	it("rejects Math.random as a nondeterministic API", () => {
@@ -52,6 +53,33 @@ describe("base preset", () => {
 		expect(code).not.toBe(0)
 		expect(output).toContain("noUnusedImports")
 	})
+
+	it("rejects a file exceeding 100 lines", () => {
+		const longFile = Array.from({ length: 101 }, (_, i) => `export const v${i} = ${i}\n`).join("")
+		const { code, output } = lint(base, longFile)
+		expect(code).not.toBe(0)
+		expect(output).toContain("noExcessiveLinesPerFile")
+	})
+})
+
+describe("web preset", () => {
+	it("allows files between 100 and 250 lines", () => {
+		const mediumFile = Array.from({ length: 150 }, (_, i) => `export const v${i} = ${i}\n`).join("")
+		expect(lint(web, mediumFile).code).toBe(0)
+	})
+
+	it("rejects a file exceeding 250 lines", () => {
+		const longFile = Array.from({ length: 251 }, (_, i) => `export const v${i} = ${i}\n`).join("")
+		const { code, output } = lint(web, longFile)
+		expect(code).not.toBe(0)
+		expect(output).toContain("noExcessiveLinesPerFile")
+	})
+
+	it("inherits unused import checks from base", () => {
+		const { code, output } = lint(web, 'import { join } from "node:path"\n')
+		expect(code).not.toBe(0)
+		expect(output).toContain("noUnusedImports")
+	})
 })
 
 describe("tsconfig preset", () => {
@@ -64,6 +92,37 @@ describe("tsconfig preset", () => {
 		})
 		const { code, output } = run([bin("tsc"), "-p", "tsconfig.json"], project)
 		expect(code).not.toBe(0)
+		expect(output).toContain("string | undefined")
+	})
+
+	it("rejects DOM types in base preset", () => {
+		const tsconfig =
+			'{"extends":"@trajectonomics/tooling/tsconfig/base.json","include":["sample.ts"]}'
+		const project = makeConsumer(dir, {
+			"tsconfig.json": tsconfig,
+			"sample.ts": "export const title: string = document.title\n",
+		})
+		const { code, output } = run([bin("tsc"), "-p", "tsconfig.json"], project)
+		expect(code).not.toBe(0)
+		expect(output).toContain("Cannot find name 'document'")
+	})
+
+	it("provides DOM types in web preset while remaining strict", () => {
+		const tsconfig =
+			'{"extends":"@trajectonomics/tooling/tsconfig/web.json","include":["sample.ts"]}'
+		const project = makeConsumer(dir, {
+			"tsconfig.json": tsconfig,
+			"sample.ts": "export const title: string = document.title\n",
+		})
+		const { code } = run([bin("tsc"), "-p", "tsconfig.json"], project)
+		expect(code).toBe(0)
+
+		const strictProject = makeConsumer(dir, {
+			"tsconfig.json": tsconfig,
+			"sample.ts": "export const x: string = [''][0]\n",
+		})
+		const { code: strictCode, output } = run([bin("tsc"), "-p", "tsconfig.json"], strictProject)
+		expect(strictCode).not.toBe(0)
 		expect(output).toContain("string | undefined")
 	})
 })
