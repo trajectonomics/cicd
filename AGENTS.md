@@ -10,6 +10,8 @@ Instructions for AI coding agents in `trajectonomics/cicd` (`@trajectonomics/too
 4. Bun only: `bun install`, `bun test`, `bun run <script>`. Do not add npm/pnpm/yarn lockfiles.
 5. Done means `bun run check` passes (Biome lint with zero warnings, strict typecheck, tests, publint). `bun run format` fixes formatting and import order. Do not loosen the presets in `biome/` or `tsconfig/` to make an error go away: they are the product.
 6. Never edit `version` in `package.json` (a first-publish bump stays uncommitted) and never run `npm publish` locally, except the very first publish of a brand-new package, which the maintainer may run locally with `--provenance=false`. Merges to `main` publish alphas; a stable release is the manual Release workflow, which tags and creates the GitHub release itself. PR titles are conventional commits (`feat:`, `fix:`, `feat!:` ...) because they decide the next version (see README "Releasing"). A release that looks failed may not be: read `docs/runbooks/publishing.md` before diagnosing npm or release output.
+7. Pi (`pi.dev`) model restriction: When running the Pi coding agent (`pi.dev`), strictly use **DeepSeek 4.1 Flash** only (e.g., `deepseek/deepseek-v4.1-flash`, `deepseek/deepseek-v4.1-flash-fast`), whether routed via Command Code GOAT (`command-code`) or OpenCode Go (`opencode`). Do not switch to or run any other models (Claude, GPT, Gemini, etc.) in Pi sessions for this repository. This rule is mechanically enforced via `.pi/settings.json`.
+
 
 ## Agent skills
 
