@@ -17,6 +17,7 @@
 			"biome": "./biome-manifest.json"
 		},
 		"./tsconfig/base.json": "./tsconfig/base.json",
+		"./tsconfig/web.json": "./tsconfig/web.json",
 		"./package.json": "./package.json"
 	},
 	"files": [

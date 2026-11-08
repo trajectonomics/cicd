@@ -19,8 +19,10 @@ bun add -d --exact @trajectonomics/tooling @biomejs/biome typescript
 | Preset | Use in | What it gives you |
 | --- | --- | --- |
 | `configs/base` | `biome.json` `extends` | Tabs, line width 100, 100 lines per file (200 in tests), complexity 10, import sorting, unused-code and `any` errors |
+| `configs/web` | `biome.json` `extends` | Everything in `base`, with 250 lines per file, Svelte domain rules, and accessibility (a11y) checks |
 | `configs/deterministic` | `biome.json` `extends` | Everything in `base`, plus the no-nondeterminism rule |
-| `tsconfig/base.json` | `tsconfig.json` `extends` | Strict ES2022 settings with `isolatedDeclarations` |
+| `tsconfig/base.json` | `tsconfig.json` `extends` | Strict ES2022 settings with `isolatedDeclarations` (no DOM) |
+| `tsconfig/web.json` | `tsconfig.json` `extends` | Everything in `tsconfig/base.json`, plus DOM and DOM.Iterable library types |
 
 ```jsonc
 // biome.json

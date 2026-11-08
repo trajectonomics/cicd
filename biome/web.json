@@ -1,0 +1,35 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
+	"extends": ["./base.json"],
+	"linter": {
+		"domains": {
+			"svelte": "all"
+		},
+		"rules": {
+			"a11y": {
+				"recommended": true
+			},
+			"style": {
+				"noExcessiveLinesPerFile": {
+					"level": "error",
+					"options": { "maxLines": 250, "skipBlankLines": true }
+				}
+			}
+		}
+	},
+	"overrides": [
+		{
+			"includes": ["**/*.test.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noExcessiveLinesPerFile": {
+							"level": "error",
+							"options": { "maxLines": 250, "skipBlankLines": true }
+						}
+					}
+				}
+			}
+		}
+	]
+}
