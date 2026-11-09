@@ -15,6 +15,20 @@ The commands live in the README ("Releasing"); this file holds the surprises.
   already published. Re-run the failed job: publishing skips a version that is already on npm, and the
   release step skips a release that already exists.
 
+## Caller contract
+
+Every package's `release.yml` is a thin caller of `publish.yml@v1`; no publish step lives in it.
+
+- Keep the filename `release.yml`. npm trusted publishing validates the calling file's name.
+- Grant `contents: write` (tag and release) and `id-token: write` (provenance and trusted publishing).
+- Pass `bump: ${{ inputs.bump || 'auto' }}` from a `workflow_dispatch` input, and `secrets: inherit`
+  so the optional `NPM_TOKEN` fallback keeps working.
+- Set `float-major-tag: true` only when consumers pin `@vN` of that package; otherwise leave it off.
+- The package needs a `bun run check` script; the reusable workflow runs it before publishing.
+
+`test/workflows.test.ts` guards this contract in the repo's own caller and in the README template a
+new package copies.
+
 ## Trusted publishing
 
 - npm validates the **calling** workflow's repository and filename, so a package's `release.yml` must

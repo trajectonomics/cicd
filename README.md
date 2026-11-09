@@ -67,6 +67,7 @@ on:
   workflow_dispatch:
     inputs:
       bump:
+        description: Version bump. auto reads commit messages since the last release.
         type: choice
         options: [auto, patch, minor, major]
         default: auto
@@ -78,7 +79,11 @@ jobs:
     uses: trajectonomics/cicd/.github/workflows/publish.yml@v1
     with:
       bump: ${{ inputs.bump || 'auto' }}
+    secrets: inherit
 ```
+
+Every package keeps this file named `release.yml` and keeps it a thin caller; publishing steps belong
+in `publish.yml`. The full caller contract is in `docs/runbooks/publishing.md`.
 
 ```yaml
 # .github/workflows/docs-wiki.yml  (public repos only)

@@ -1,27 +1,11 @@
 name: Publish
 
 # Shared npm publishing for every Trajectonomics package. Call it from a thin
-# release.yml in the package repo:
+# release.yml in the package repo; README.md holds the caller template.
 #
-#   name: Release
-#   on:
-#     push:
-#       branches: [main]
-#       paths-ignore: ["**/*.md", ".agents/**", ".claude/**", ".github/**"]
-#     workflow_dispatch:
-#       inputs:
-#         bump:
-#           type: choice
-#           options: [auto, patch, minor, major]
-#           default: auto
-#   permissions:
-#     contents: write
-#     id-token: write
-#   jobs:
-#     publish:
-#       uses: trajectonomics/cicd/.github/workflows/publish.yml@v1
-#       with:
-#         bump: ${{ inputs.bump || 'auto' }}
+# The caller keeps the filename release.yml, grants contents: write and
+# id-token: write, passes bump and secrets: inherit, and carries no publish
+# steps of its own.
 #
 # push to main      -> alpha  (dist-tag "alpha"), version from scripts/version.ts
 # manual dispatch   -> stable (dist-tag "latest"): computes the version, publishes to npm,
