@@ -142,6 +142,11 @@ describe("drift.yml (the reusable workflow)", () => {
 		expect(drift.on).not.toHaveProperty("schedule")
 	})
 
+	it("checks the planner out at the same v1 the caller pins, never at a ref of its own choosing", () => {
+		const planner = steps(drift).find((step) => step.with?.["repository"] !== undefined)
+		expect(planner?.with).toMatchObject({ ref: "v1", path: ".cicd" })
+	})
+
 	it("runs the planner from the pinned cicd checkout instead of inlined shell", () => {
 		const runs = steps(drift)
 			.map((step) => step.run)

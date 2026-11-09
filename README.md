@@ -156,8 +156,8 @@ issue and the run stays green, so a broken file never reads as a broken reposito
 only when the registry or `gh` itself fails.
 
 GitHub disables a scheduled workflow in a repository with no activity for **60 days**, and the drift
-check then quietly stops reporting. GitHub's email is the only warning: run `gh workflow run drift.yml`
-and the schedule starts again.
+check then quietly stops reporting. GitHub's email is the only warning, and a disabled workflow cannot
+be dispatched: enable it again in the Actions tab, or with `gh workflow enable drift.yml`.
 
 ## Development
 
