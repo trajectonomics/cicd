@@ -10,7 +10,7 @@
  */
 import { existsSync, readFileSync } from "node:fs"
 import { $ } from "bun"
-import { type DriftInput, planDrift } from "./drift-plan"
+import { type DriftInput, type Pin, planDrift } from "./drift-plan"
 import { ISSUE_TITLE, renderIssue, TITLE_PREFIX } from "./drift-report"
 
 const PACKAGE = "@trajectonomics/tooling"
@@ -23,9 +23,15 @@ type Manifest = {
 	readonly dependencies?: Record<string, string>
 }
 
-function readPin(): string | null {
-	const manifest = JSON.parse(readFileSync("package.json", "utf8")) as Manifest
-	return manifest.devDependencies?.[PACKAGE] ?? manifest.dependencies?.[PACKAGE] ?? null
+/** What package.json says about the pin. Never a throw: an unreadable manifest is a report too. */
+function readPin(): Pin {
+	try {
+		const manifest = JSON.parse(readFileSync("package.json", "utf8")) as Manifest
+		const version = manifest.devDependencies?.[PACKAGE] ?? manifest.dependencies?.[PACKAGE]
+		return version === undefined ? { absent: true } : { version }
+	} catch (error) {
+		return { unreadable: error instanceof Error ? error.message : String(error) }
+	}
 }
 
 function readConfig(): string | null {
@@ -47,7 +53,7 @@ async function readLatest(): Promise<string> {
 
 /** The one open issue whose title carries TITLE_PREFIX. */
 async function findIssue(): Promise<Issue | undefined> {
-	const listed = await $`gh issue list --state open --limit 100 --json number,title`.text()
+	const listed = await $`gh issue list --state open --limit 1000 --json number,title`.text()
 	const issues = JSON.parse(listed) as readonly Issue[]
 	return issues.find((issue) => issue.title.startsWith(TITLE_PREFIX))
 }

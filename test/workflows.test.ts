@@ -127,7 +127,7 @@ describe("check.yml (the reusable check)", () => {
 	})
 })
 
-describe("drift.yml (the reusable drift caller)", () => {
+describe("drift.yml (the reusable workflow)", () => {
 	const drift = load("drift.yml")
 
 	it("is callable from other repos", () => {

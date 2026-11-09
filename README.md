@@ -141,7 +141,7 @@ permanently stale.
 | Finding | What it means | What to do |
 | --- | --- | --- |
 | pin behind | the exact pin predates `latest` | `bun add -d --exact @trajectonomics/tooling@<latest>` |
-| pin not exact | the pin is a range, or the package is not a dependency | `bun add -d --exact @trajectonomics/tooling` |
+| pin not exact | the pin is a range, the package is not a dependency, or `package.json` could not be read | `bun add -d --exact @trajectonomics/tooling`, or fix the manifest |
 | preset not extended | `biome.json` extends no `@trajectonomics/tooling/configs/*` preset | add one to `extends`, per Presets above |
 | local rules | `biome.json` keeps a top-level block, or an `overrides` entry carrying `linter`, `formatter` or `plugins` | delete it; a rule that is wrong for every Consumer belongs in the preset |
 | config unreadable | the file is missing, is not a JSON object, or does not parse | fix the file |
@@ -151,9 +151,9 @@ level, and an `overrides` entry may scope `includes` and `files`. Everything els
 preset. A range pin is reported as not exact rather than as behind: it resolves whatever npm
 publishes, so two installs can disagree, which is the problem worth an issue.
 
-The issue is the report. An unreadable config opens or updates the issue and the run stays green, so a
-broken file never reads as a broken repository. The run goes red only when the registry or `gh` itself
-fails.
+The issue is the report. A `package.json` or Biome config that cannot be read opens or updates the
+issue and the run stays green, so a broken file never reads as a broken repository. The run goes red
+only when the registry or `gh` itself fails.
 
 GitHub disables a scheduled workflow in a repository with no activity for **60 days**, and the drift
 check then quietly stops reporting. GitHub's email is the only warning: run `gh workflow run drift.yml`

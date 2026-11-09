@@ -13,6 +13,9 @@ function remedy(finding: Finding): string {
 		case "pin-behind":
 			return `The pin \`${finding.pin}\` is behind the published \`${finding.latest}\`. Run \`bun add -d --exact ${PACKAGE}@${finding.latest}\`.`
 		case "pin-not-exact":
+			if (finding.reason !== undefined) {
+				return `\`package.json\` could not be read: ${finding.reason}. This is a report, not a failed run: fix it when convenient.`
+			}
 			return finding.pin === null
 				? `\`${PACKAGE}\` is not a dependency. Run \`bun add -d --exact ${PACKAGE}\`.`
 				: `The pin \`${finding.pin}\` is a range, so two installs can resolve different versions. Run \`bun add -d --exact ${PACKAGE}\`.`

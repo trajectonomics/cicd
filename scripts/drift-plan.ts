@@ -8,14 +8,27 @@
 /** One reason a consumer has drifted from the shared tooling. */
 export type Finding =
 	| { readonly kind: "pin-behind"; readonly pin: string; readonly latest: string }
-	| { readonly kind: "pin-not-exact"; readonly pin: string | null }
+	| {
+			readonly kind: "pin-not-exact"
+			readonly pin: string | null
+			/** Set when `package.json` itself could not be read. */
+			readonly reason?: string
+	  }
 	| { readonly kind: "preset-not-extended" }
 	| { readonly kind: "local-rules"; readonly keys: readonly string[] }
 	| { readonly kind: "config-unreadable"; readonly reason: string }
 
+/** What the caller's package.json says about the pin. */
+export type Pin =
+	/** The version spec the caller wrote. */
+	| { readonly version: string }
+	/** `@trajectonomics/tooling` is not a dependency at all. */
+	| { readonly absent: true }
+	/** The manifest could not be read or parsed; the string is why. */
+	| { readonly unreadable: string }
+
 export type DriftInput = {
-	/** The version spec the consumer pins, or null when the package is not a dependency. */
-	readonly pin: string | null
+	readonly pin: Pin
 	/** The text of the consumer's Biome config, or null when it has no config file. */
 	readonly config: string | null
 	/** The version the `latest` dist-tag points at. Never `alpha`. */
@@ -58,11 +71,15 @@ function compareVersions(a: string, b: string): number {
 
 /**
  * A range resolves whatever npm publishes, so it is never stale; it is reported
- * as not exact instead, because two installs can then disagree.
+ * as not exact instead, because two installs can then disagree. A manifest that
+ * cannot be read lands here too: either way, no version anyone can check is pinned.
  */
-function pinFindings(pin: string | null, latest: string): readonly Finding[] {
-	if (pin === null || !EXACT.test(pin)) return [{ kind: "pin-not-exact", pin }]
-	return compareVersions(pin, latest) < 0 ? [{ kind: "pin-behind", pin, latest }] : []
+function pinFindings(pin: Pin, latest: string): readonly Finding[] {
+	if ("unreadable" in pin) return [{ kind: "pin-not-exact", pin: null, reason: pin.unreadable }]
+	if ("absent" in pin) return [{ kind: "pin-not-exact", pin: null }]
+	if (!EXACT.test(pin.version)) return [{ kind: "pin-not-exact", pin: pin.version }]
+	if (compareVersions(pin.version, latest) >= 0) return []
+	return [{ kind: "pin-behind", pin: pin.version, latest }]
 }
 
 export function planDrift(input: DriftInput): readonly Finding[] {

@@ -16,7 +16,7 @@ const current = `{
 }`
 
 function input(overrides: Partial<DriftInput> = {}): DriftInput {
-	return { pin: "1.1.0", config: current, latest: "1.1.0", ...overrides }
+	return { pin: { version: "1.1.0" }, config: current, latest: "1.1.0", ...overrides }
 }
 
 function kinds(overrides: Partial<DriftInput> = {}): string[] {
@@ -29,7 +29,7 @@ describe("a consumer that has drifted", () => {
 	})
 
 	it("reports the pin behind when the exact pin predates the published latest", () => {
-		expect(planDrift(input({ pin: "1.0.0" }))).toContainEqual({
+		expect(planDrift(input({ pin: { version: "1.0.0" } }))).toContainEqual({
 			kind: "pin-behind",
 			pin: "1.0.0",
 			latest: "1.1.0",
@@ -37,11 +37,19 @@ describe("a consumer that has drifted", () => {
 	})
 
 	it("reports a pin that is not exact when it is a range", () => {
-		expect(kinds({ pin: "^1.0.0" })).toEqual(["pin-not-exact"])
+		expect(kinds({ pin: { version: "^1.0.0" } })).toEqual(["pin-not-exact"])
 	})
 
 	it("reports a pin that is not exact when the package is not a dependency", () => {
-		expect(planDrift(input({ pin: null }))).toEqual([{ kind: "pin-not-exact", pin: null }])
+		expect(planDrift(input({ pin: { absent: true } }))).toEqual([
+			{ kind: "pin-not-exact", pin: null },
+		])
+	})
+
+	it("reports a package.json it cannot read instead of failing the run", () => {
+		expect(planDrift(input({ pin: { unreadable: "Unexpected end of input" } }))).toEqual([
+			{ kind: "pin-not-exact", pin: null, reason: "Unexpected end of input" },
+		])
 	})
 
 	it("reports a preset not extended when extends names no preset of this package", () => {
@@ -101,6 +109,7 @@ describe("the issue a run files", () => {
 		{ kind: "pin-behind", pin: "1.0.0", latest: "1.1.0" },
 		{ kind: "pin-not-exact", pin: "^1.0.0" },
 		{ kind: "pin-not-exact", pin: null },
+		{ kind: "pin-not-exact", pin: null, reason: "Unexpected end of input" },
 		{ kind: "preset-not-extended" },
 		{ kind: "local-rules", keys: ["linter", "overrides[0].plugins"] },
 		{ kind: "config-unreadable", reason: "Unexpected end of input" },
@@ -115,6 +124,7 @@ describe("the issue a run files", () => {
 		for (const expected of [
 			"The pin `^1.0.0` is a range",
 			"is not a dependency",
+			"`package.json` could not be read",
 			"extends no `@trajectonomics/tooling/configs/*` preset",
 			"`linter`, `overrides[0].plugins`",
 			"Unexpected end of input",
