@@ -99,7 +99,8 @@ jobs:
 ```
 
 `check.yml` installs Bun, runs `bun install --frozen-lockfile`, then `bun run check`. It takes
-optional `bun-version` and `script` inputs. `pr-title.yml` requires a conventional-commit PR title.
+optional `bun-version`, `node-version` and `script` inputs. `node-version` is empty by default, and its
+setup step is skipped unless the caller sets it. `pr-title.yml` requires a conventional-commit PR title.
 `publish.yml` is described under Releasing.
 
 `docs-wiki.yml` mirrors `README.md` (as the wiki Home), `GLOSSARY.md`, `docs/adr/` and
@@ -108,6 +109,55 @@ truth: the wiki is a read-only copy that is overwritten on every run, so never e
 public repos add it; private repos do not use this job. It skips quietly until the owner enables
 Wikis and creates a first page. Wiki pages are flat, so relative links between docs may not resolve
 there. The rule is decided in [#3](https://github.com/trajectonomics/cicd/issues/3).
+
+A repository that wants the weekly drift report adds a caller of its own:
+
+```yaml
+# .github/workflows/drift.yml
+name: Tooling drift
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  drift:
+    uses: trajectonomics/cicd/.github/workflows/drift.yml@v1
+```
+
+The caller owns the weekly schedule: a reusable workflow's own `schedule` does not fire for the
+repositories that call it. `workflow_dispatch` is there for a run by hand.
+
+## Tooling drift
+
+`drift.yml` compares a repository with the published `@trajectonomics/tooling` `latest` and opens,
+updates or closes **one** issue titled `Tooling drift: ...`. It finds that issue by its open title
+prefix, so no label has to be provisioned in the eight repositories that call it. It never compares
+against the `alpha` dist-tag: that tag exists after every merge, so every repository would look
+permanently stale.
+
+| Finding | What it means | What to do |
+| --- | --- | --- |
+| pin behind | the exact pin predates `latest` | `bun add -d --exact @trajectonomics/tooling@<latest>` |
+| pin not exact | the pin is a range, or the package is not a dependency | `bun add -d --exact @trajectonomics/tooling` |
+| preset not extended | `biome.json` extends no `@trajectonomics/tooling/configs/*` preset | add one to `extends`, per Presets above |
+| local rules | `biome.json` keeps a top-level block, or an `overrides` entry carrying `linter`, `formatter` or `plugins` | delete it; a rule that is wrong for every Consumer belongs in the preset |
+| config unreadable | the file is missing, is not a JSON object, or does not parse | fix the file |
+
+A Consumer may keep `$schema`, `root`, `extends`, `vcs`, `files`, `overrides` and `css` at the top
+level, and an `overrides` entry may scope `includes` and `files`. Everything else competes with the
+preset. A range pin is reported as not exact rather than as behind: it resolves whatever npm
+publishes, so two installs can disagree, which is the problem worth an issue.
+
+The issue is the report. An unreadable config opens or updates the issue and the run stays green, so a
+broken file never reads as a broken repository. The run goes red only when the registry or `gh` itself
+fails.
+
+GitHub disables a scheduled workflow in a repository with no activity for **60 days**, and the drift
+check then quietly stops reporting. GitHub's email is the only warning: run `gh workflow run drift.yml`
+and the schedule starts again.
 
 ## Development
 
