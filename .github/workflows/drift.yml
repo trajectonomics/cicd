@@ -1,0 +1,58 @@
+name: Tooling drift
+
+# Reusable. Every consumer calls this weekly from a thin drift.yml:
+#   uses: trajectonomics/cicd/.github/workflows/drift.yml@v1
+#
+# The caller owns the schedule: a reusable workflow's own schedule does not fire
+# for the repositories that call it. The caller also adds workflow_dispatch for a
+# run by hand. A schedule GitHub turned off after 60 days without repository
+# activity comes back with `gh workflow enable drift.yml`, not with a dispatch.
+#
+# One issue per repository, found by the open title prefix "Tooling drift:" and
+# closed when nothing is stale. A finding is a report, not a red run: a broken
+# Biome config opens an issue instead of failing a badge whose cause nobody connects.
+on:
+  workflow_call:
+    inputs:
+      bun-version:
+        description: Bun version to install.
+        type: string
+        default: "1.4.4"
+
+permissions:
+  contents: read # check the caller out
+  issues: write # open, update and close the drift issue
+
+concurrency:
+  group: drift-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  drift:
+    name: Drift
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ inputs.bun-version }}
+
+      # The planner lives in trajectonomics/cicd, at the same v1 this workflow is
+      # called at, so the report and the workflow can never come from different
+      # revisions. Checking it out inside the caller is invisible to the package:
+      # it reads two files and calls gh, it installs nothing.
+      - name: Checkout the planner
+        uses: actions/checkout@v4
+        with:
+          repository: trajectonomics/cicd
+          ref: v1
+          path: .cicd
+          sparse-checkout: scripts
+
+      - name: Report drift
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bun .cicd/scripts/drift.ts
