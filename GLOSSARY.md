@@ -18,3 +18,9 @@ A GritQL plugin (`no-nondeterminism.grit`) that rejects clocks, randomness, and 
 
 ### Invariant
 A rule or condition that must hold true across all state transitions in this system.
+
+### Direct-commit guard
+The tracked local hooks (`pre-commit`, `pre-merge-commit`, `pre-push`) that refuse a commit on, or a push to, `main`. An accident guard, not branch protection: `--no-verify`, an unactivated clone, the web UI and the API bypass it.
+
+### Direct-push check
+A Reusable Workflow that reports a commit on `main` with no pull request merged into `main`, by failing the run and opening an issue. It acts after the push, so it is an alarm, not prevention.
