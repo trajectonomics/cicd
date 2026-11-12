@@ -1,4 +1,15 @@
 #!/bin/sh
 # Direct-commit guard: refuse a commit while main or master is checked out.
+# An accident guard, not branch protection: --no-verify bypasses it.
 # Activate once per clone: git config core.hooksPath .githooks
-exec "$(dirname "$0")/_main-guard.sh" branch
+
+refuse() {
+	cat >&2 <<'MESSAGE'
+Direct changes to main are not allowed. Create `feat/*`, `fix/*` or `docs/*` and open a PR.
+MESSAGE
+	exit 1
+}
+
+case "$(git symbolic-ref -q --short HEAD)" in
+main | master) refuse ;;
+esac

@@ -24,8 +24,10 @@ async function main(): Promise<void> {
 	const after = process.env["AFTER"] || process.env["GITHUB_SHA"] || ""
 	const compare = await readCompare(repository, before, after)
 	const commits = compare.status === "complete" ? compare.commits : [compare.after]
+	// A root commit is exempt, so its association is not worth a retry.
+	const pushed = commits.filter((commit) => commit.parents.length > 0).map((commit) => commit.sha)
 	const pullRequests = await associationsFor(
-		commits.map((commit) => commit.sha),
+		pushed,
 		(sha) => associatedPulls(repository, sha),
 		(ms) => Bun.sleep(ms),
 	)

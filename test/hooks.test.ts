@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { cpSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
+import { cpSync, mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 import { run } from "./consumer"
@@ -150,17 +150,10 @@ describe("the direct-commit guard", () => {
 		expect(push.output).toContain(MESSAGE)
 	})
 
-	it("commits the shared guard executable too, because a hook execs it", () => {
-		for (const name of [...HOOKS, "_main-guard.sh"]) {
+	it("commits each hook executable, because the tracked copy is what git runs", () => {
+		for (const name of HOOKS) {
 			expect(statSync(join(hooks, name)).mode & 0o777).toBe(0o755)
 		}
-	})
-
-	it("refuses instead of silently allowing when the shared guard file is missing", () => {
-		const { dir } = clone()
-		branch(dir, "feat/x")
-		rmSync(join(dir, ".githooks/_main-guard.sh"))
-		expect(commit(dir, "a.txt", "a").code).not.toBe(0)
 	})
 })
 

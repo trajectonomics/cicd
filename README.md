@@ -170,7 +170,7 @@ control of infra ADR 0005.
 
 ### The direct-commit guard
 
-Three tracked POSIX shell hooks in `.githooks/`, one `exec` of `_main-guard.sh` each, refuse:
+Three tracked POSIX shell hooks in `.githooks/`, one file each, refuse:
 
 | Hook | Refuses |
 | --- | --- |
@@ -186,10 +186,8 @@ git config core.hooksPath .githooks
 
 The setting lives in the clone's shared `.git/config`, so every worktree of that clone is covered,
 including every Factory thread's (factory ADR 0008). A relative path resolves from the root of each
-worktree, so `.githooks/` has to be committed in the repository, whole. The three hooks are one-line
-`exec`s of `_main-guard.sh`; if that file is missing or not executable the `exec` fails and the hook
-refuses, instead of silently allowing a direct change. The hooks need no Node, no Bun and no Husky,
-and they fire for every agent that calls `git`, whatever model or CLI it is. A repository that
+worktree, so `.githooks/` has to be committed in the repository. The hooks need no Node, no Bun and no
+Husky, and they fire for every agent that calls `git`, whatever model or CLI it is. A repository that
 already uses Husky must pick one: `core.hooksPath` replaces `.git/hooks`. A detached HEAD is allowed,
 because a rebase commits there, and so are `feat/*`, `fix/*`, `docs/*` and `factory/*`. Pushing a tag
 passes.
