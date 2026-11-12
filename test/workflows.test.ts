@@ -54,6 +54,17 @@ describe("publish.yml (the reusable workflow)", () => {
 	it("asks for the same token permissions as its callers", () => {
 		expect(publish.permissions).toMatchObject({ "id-token": "write", contents: "write" })
 	})
+
+	it("explains a brand-new package before it tries to publish", () => {
+		const all = steps(publish)
+		const preflight = all.findIndex((step) => step.name?.startsWith("Preflight"))
+		const publishStep = all.findIndex((step) => step.name === "Publish to npm")
+		expect(preflight).toBeGreaterThan(-1)
+		expect(preflight).toBeLessThan(publishStep)
+		const run = all[preflight]?.run ?? ""
+		expect(run).toContain("https://www.npmjs.com/package/$NAME/access")
+		expect(run).toContain("--provenance=false")
+	})
 })
 
 describe("check.yml (the reusable check)", () => {

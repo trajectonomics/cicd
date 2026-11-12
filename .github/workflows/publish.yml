@@ -103,6 +103,24 @@ jobs:
       - name: Upgrade npm for trusted publishing
         run: npm install -g npm@^11.5.1
 
+      # A package that is not on npm yet cannot have a Trusted Publisher, so without NPM_TOKEN the
+      # publish below would die with a bare "need auth". Say what to do instead. Runs on push and on
+      # dispatch alike.
+      - name: Preflight, a brand-new package needs a first publish by hand
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          [ -n "$NODE_AUTH_TOKEN" ] && exit 0
+          NAME=$(node -p "require('./package.json').name")
+          if OUT=$(npm view "$NAME" version 2>&1); then exit 0; fi
+          echo "$OUT" | grep -q E404 || exit 0 # a registry hiccup is not a missing package
+          {
+            echo "::error title=$NAME is not on npm yet::npm cannot attach a Trusted Publisher to a package that does not exist, and this repository has no NPM_TOKEN."
+            echo "::error::The owner publishes the first version once by hand: npm version 0.1.0-alpha.0 --no-git-tag-version; npm publish --access public --tag alpha --provenance=false; git checkout package.json."
+            echo "::error::Then add a Trusted Publisher at https://www.npmjs.com/package/$NAME/access (GitHub Actions, this repository, workflow release.yml, no environment), and re-run this job within two days. Steps: docs/runbooks/publishing.md in trajectonomics/cicd."
+          }
+          exit 1
+
       # Uses NPM_TOKEN when the secret is set; otherwise npm uses trusted publishing (OIDC).
       - name: Publish to npm
         env:

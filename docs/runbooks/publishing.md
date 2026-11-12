@@ -36,6 +36,10 @@ new package copies.
 - A new Trusted Publisher entry must be proven by one successful CI publish within two days.
 - The first version of a brand-new package is published by hand with `--provenance=false`; npm cannot
   attach a trusted publisher to a package that does not exist. Never commit the version bump.
+- Without `NPM_TOKEN`, a package that returns 404 on npm fails the **Preflight** step of `publish.yml` with the
+  bootstrap steps and the Trusted Publisher URL, on a push and on a dispatch. That is the expected first
+  failure of a brand-new package, not a broken pipeline. After the first publish and the Trusted Publisher
+  entry, re-run the failed job.
 - Both the caller and `publish.yml` need `id-token: write`. `test/workflows.test.ts` guards this.
 
 ## Biome preset packaging
