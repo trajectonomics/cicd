@@ -1,64 +1,15 @@
 import { describe, expect, it } from "bun:test"
-import { readFileSync } from "node:fs"
-import { join, resolve } from "node:path"
+import {
+	documentedCallers,
+	expectScriptSteps,
+	loadWorkflow as load,
+	steps,
+	type Workflow,
+} from "./workflow-file"
 
-const root = resolve(import.meta.dir, "..")
-const workflows = join(root, ".github/workflows")
 const localCaller = "./.github/workflows/publish.yml"
 const publishedCaller = "trajectonomics/cicd/.github/workflows/publish.yml@v1"
 const publishedDrift = "trajectonomics/cicd/.github/workflows/drift.yml@v1"
-
-type Step = {
-	uses?: string
-	run?: string
-	if?: string
-	with?: Record<string, unknown>
-}
-
-type Job = {
-	uses?: string
-	with?: Record<string, unknown>
-	secrets?: string
-	steps?: Step[]
-}
-
-type Workflow = {
-	on: {
-		push?: object | null
-		schedule?: { cron?: string }[]
-		workflow_dispatch?: { inputs?: Record<string, unknown> } | null
-		workflow_call?: { inputs?: Record<string, unknown> } | null
-	}
-	permissions?: Record<string, string>
-	jobs: Record<string, Job>
-}
-
-function load(file: string): Workflow {
-	return Bun.YAML.parse(readFileSync(join(workflows, file), "utf8")) as Workflow
-}
-
-function steps(workflow: Workflow): Step[] {
-	return Object.values(workflow.jobs).flatMap((job) => job.steps ?? [])
-}
-
-/** Caller templates this repo publishes. README.md is what a consumer copies. */
-function documentedCallers(file: string): Workflow[] {
-	const readme = readFileSync(join(root, "README.md"), "utf8")
-	return [...readme.matchAll(/```yaml\n([\s\S]*?)```/g)]
-		.map((match) => match[1] ?? "")
-		.filter((yaml) => yaml.includes(`# .github/workflows/${file}`))
-		.map((yaml) => Bun.YAML.parse(yaml) as Workflow)
-}
-
-/** A run step is one bun command; a second line or a shell operator belongs in scripts/. */
-function expectScriptSteps(workflow: Workflow): void {
-	for (const step of steps(workflow)) {
-		if (step.run === undefined) continue
-		expect(step.run).toMatch(/^bun /)
-		expect(step.run).not.toContain("\n")
-		expect(step.run).not.toMatch(/&&|\|\||[;|<>]|\$\(/)
-	}
-}
 
 function expectThinCaller(workflow: Workflow, uses: string): void {
 	expect(workflow.permissions).toMatchObject({ "id-token": "write", contents: "write" })

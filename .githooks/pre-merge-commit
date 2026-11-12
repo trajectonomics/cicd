@@ -1,0 +1,15 @@
+#!/bin/sh
+# Direct-commit guard: refuse the merge commit a merge into main or master
+# would create. An accident guard, not branch protection.
+# Activate once per clone: git config core.hooksPath .githooks
+
+refuse() {
+	cat >&2 <<'MESSAGE'
+Direct changes to main are not allowed. Create `feat/*`, `fix/*` or `docs/*` and open a PR.
+MESSAGE
+	exit 1
+}
+
+case "$(git symbolic-ref -q --short HEAD)" in
+main | master) refuse ;;
+esac

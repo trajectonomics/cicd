@@ -1,0 +1,53 @@
+name: Direct push check
+
+# Reusable. Every consumer calls this from a thin direct-push-check.yml:
+#   uses: trajectonomics/cicd/.github/workflows/direct-push-check.yml@v1
+#
+# The caller owns `on: push: branches: [main]` and grants contents: read,
+# pull-requests: read and issues: write, because a caller's permissions cap the
+# called workflow's. This check runs after the push: the push already happened,
+# so a red main and one issue per offending commit are the alarm, not prevention.
+#
+# There is no concurrency group on purpose: a group keeps one pending run and
+# drops the rest, so a dropped run could skip a commit. One issue per commit,
+# found by title among all issues, makes concurrent runs and re-runs safe.
+on:
+  workflow_call:
+    inputs:
+      bun-version:
+        description: Bun version to install.
+        type: string
+        default: "1.4.4"
+
+permissions:
+  contents: read # read the pushed commits
+  pull-requests: read # find the pull request that merged each commit
+  issues: write # open the alarm issue, and its label
+
+jobs:
+  direct-push-check:
+    name: Direct push check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ inputs.bun-version }}
+
+      # The planner lives in trajectonomics/cicd at the same v1 this workflow is
+      # called at, so the check and its logic never come from different revisions.
+      - name: Checkout the planner
+        uses: actions/checkout@v4
+        with:
+          repository: trajectonomics/cicd
+          ref: v1
+          path: .cicd
+          sparse-checkout: scripts
+
+      - name: Check main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+        run: bun .cicd/scripts/direct-push.ts
