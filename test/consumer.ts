@@ -22,7 +22,11 @@ export function makeConsumer(parent: string, files: Record<string, string>): str
 }
 
 /** Runs a command in `cwd`, returning its exit code and combined output. */
-export function run(cmd: string[], cwd: string): { code: number; output: string } {
-	const done = Bun.spawnSync(cmd, { cwd })
+export function run(
+	cmd: string[],
+	cwd: string,
+	stdin?: Uint8Array,
+): { code: number; output: string } {
+	const done = Bun.spawnSync(cmd, stdin === undefined ? { cwd } : { cwd, stdin })
 	return { code: done.exitCode, output: done.stdout.toString() + done.stderr.toString() }
 }

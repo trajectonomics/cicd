@@ -1,0 +1,5 @@
+#!/bin/sh
+# Direct-commit guard: refuse any push that updates main or master, including
+# HEAD:main from a feature branch and a deletion. Activate once per clone:
+# git config core.hooksPath .githooks
+exec "$(dirname "$0")/_main-guard.sh" push

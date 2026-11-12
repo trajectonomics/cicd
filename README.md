@@ -159,6 +159,96 @@ GitHub disables a scheduled workflow in a repository with no activity for **60 d
 check then quietly stops reporting. GitHub's email is the only warning, and a disabled workflow cannot
 be dispatched: enable it again in the Actions tab, or with `gh workflow enable drift.yml`.
 
+## Guarding `main` without branch protection
+
+GitHub branch protection is unavailable on a private repository on the free plan (HTTP 403), and the
+agents on Pi and Antigravity are not covered by Claude Code hooks. Rule 1 of `AGENTS.md` ("Never
+commit to `main`") then rests on two layers that do work there. They are an **accident guard** and an
+**after-the-fact alarm**, not a substitute for branch protection: only protection, a public
+repository or a paid plan prevents a push to `main`. Never count the guard as the protected-`main`
+control of infra ADR 0005.
+
+### The direct-commit guard
+
+Three tracked POSIX shell hooks in `.githooks/`, one `exec` of `_main-guard.sh` each, refuse:
+
+| Hook | Refuses |
+| --- | --- |
+| `pre-commit` | a commit while `main` or `master` is checked out |
+| `pre-merge-commit` | the merge commit a merge into `main` or `master` would create |
+| `pre-push` | every push that updates `refs/heads/main` or `refs/heads/master`, including `git push origin HEAD:main` from a feature branch, a deletion, and a multi-ref push where one ref is `main` |
+
+Activate it once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The setting lives in the clone's shared `.git/config`, so every worktree of that clone is covered,
+including every Factory thread's (factory ADR 0008). A relative path resolves from the root of each
+worktree, so `.githooks/` has to be committed in the repository, whole. The three hooks are one-line
+`exec`s of `_main-guard.sh`; if that file is missing or not executable the `exec` fails and the hook
+refuses, instead of silently allowing a direct change. The hooks need no Node, no Bun and no Husky,
+and they fire for every agent that calls `git`, whatever model or CLI it is. A repository that
+already uses Husky must pick one: `core.hooksPath` replaces `.git/hooks`. A detached HEAD is allowed,
+because a rebase commits there, and so are `feat/*`, `fix/*`, `docs/*` and `factory/*`. Pushing a tag
+passes.
+
+What it cannot stop: `--no-verify`, a clone where the hook path was never set, and any change made
+through the GitHub web UI or API. The direct-push check reports all of them after the push.
+
+### The direct-push check
+
+`direct-push-check.yml` is a Reusable Workflow that runs after a push to `main`. For every commit in
+the push it asks GitHub which pull request contains it, and a commit with no pull request **merged**
+into `main` is an offender: the job fails and opens one `ready-for-human` issue naming the commit, its
+author and the fix (revert it on a `fix/*` branch and open a PR). The issue is found again by its
+title among all issues, open or closed, so a re-run opens no second one. At most five issues are opened
+per push; the rest are named in the job log, and the job fails for every offender. A squash or rebase
+merge has an associated pull request and passes, and the root commit is exempt.
+
+Add this caller, and keep it named `direct-push-check.yml`:
+
+```yaml
+# .github/workflows/direct-push-check.yml
+name: Direct push check
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read      # read the pushed commits
+  pull-requests: read # find the pull request that merged each commit
+  issues: write       # open the alarm issue and its label
+jobs:
+  direct-push-check:
+    uses: trajectonomics/cicd/.github/workflows/direct-push-check.yml@v1
+```
+
+The caller's permissions cap the called workflow's, so grant all three. The Reusable Workflow takes an
+optional `bun-version`. It has no `concurrency` group on purpose: a group keeps one pending run and
+drops the rest, so a dropped run could skip a commit; one issue per commit makes concurrent runs safe.
+GitHub's commit-to-pull-request association lags a few seconds behind a merge, so an empty answer is
+retried before a commit is called an offender.
+
+Two blind spots, both announced as a warning annotation in the job and neither silent: a new branch or
+a force push (the `before` commit no longer exists) and a compare of more than 250 commits inspect only
+the final commit, so history rewritten before it is not seen. The check runs after the push, so a red
+`main` does not stop an alpha publish.
+
+### Checklist: a private repository without branch protection
+
+A private repository without branch protection meets this standard when all of these hold:
+
+- [ ] `.githooks/pre-commit`, `.githooks/pre-merge-commit` and `.githooks/pre-push` are tracked and
+  executable, and the clone has run `git config core.hooksPath .githooks`.
+- [ ] `.github/workflows/direct-push-check.yml` calls
+  `trajectonomics/cicd/.github/workflows/direct-push-check.yml@v1` with `contents: read`,
+  `pull-requests: read` and `issues: write`.
+- [ ] Branch protection is still pending, so both layers remain the only guard.
+
+A public repository ships the same hook, even with branch protection on: the accidental commit fails
+before the network round trip.
+
 ## Development
 
 ```bash

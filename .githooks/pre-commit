@@ -1,0 +1,4 @@
+#!/bin/sh
+# Direct-commit guard: refuse a commit while main or master is checked out.
+# Activate once per clone: git config core.hooksPath .githooks
+exec "$(dirname "$0")/_main-guard.sh" branch
