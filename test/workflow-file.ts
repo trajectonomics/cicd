@@ -6,6 +6,7 @@ const root = resolve(import.meta.dir, "..")
 const workflows = join(root, ".github/workflows")
 
 export type Step = {
+	name?: string
 	uses?: string
 	run?: string
 	if?: string
