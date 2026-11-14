@@ -37,6 +37,21 @@ on:
       NPM_TOKEN:
         description: Optional. Needed only when no trusted publisher is configured yet.
         required: false
+    # A Consumer reads these as needs.<caller job>.outputs.<name>. They are
+    # additive: a caller pinned to @v1 that ignores them keeps working.
+    outputs:
+      version:
+        description: The version this run published, including the alpha prerelease suffix.
+        value: ${{ jobs.publish.outputs.version }}
+      tag:
+        description: The GitHub release tag vX.Y.Z on a stable release; empty on alpha.
+        value: ${{ jobs.publish.outputs.tag }}
+      channel:
+        description: The channel this run published to, alpha or stable.
+        value: ${{ jobs.publish.outputs.channel }}
+      dist-tag:
+        description: The npm dist-tag the version was published under, alpha or latest.
+        value: ${{ jobs.publish.outputs.dist-tag }}
 
 permissions:
   contents: write # floating major tag
@@ -49,6 +64,12 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      # The plan step does not write the tag: stable carries the release tag, alpha an empty string.
+      tag: ${{ steps.plan.outputs.channel == 'stable' && format('v{0}', steps.plan.outputs.version) || '' }}
+      channel: ${{ steps.plan.outputs.channel }}
+      dist-tag: ${{ steps.plan.outputs.dist_tag }}
     env:
       EVENT: ${{ github.event_name }}
       BUMP: ${{ inputs.bump }}

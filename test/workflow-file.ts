@@ -18,6 +18,12 @@ export type Job = {
 	with?: Record<string, unknown>
 	secrets?: string
 	steps?: Step[]
+	outputs?: Record<string, string>
+}
+
+export type CalledOutput = {
+	description?: string
+	value: string
 }
 
 export type Workflow = {
@@ -25,7 +31,10 @@ export type Workflow = {
 		push?: { branches?: string[] } | null
 		schedule?: { cron?: string }[]
 		workflow_dispatch?: { inputs?: Record<string, unknown> } | null
-		workflow_call?: { inputs?: Record<string, unknown> } | null
+		workflow_call?: {
+			inputs?: Record<string, unknown>
+			outputs?: Record<string, CalledOutput>
+		} | null
 	}
 	permissions?: Record<string, string>
 	jobs: Record<string, Job>

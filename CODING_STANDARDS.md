@@ -24,6 +24,8 @@ Decisions live in `docs/adr/`; vocabulary lives in `GLOSSARY.md`; release surpri
   inherits the fix.
 - A new input on `publish.yml` has a default, so callers pinned to `@v1` keep working. Removing or
   renaming an input is a breaking change and needs a new major tag.
+- A new output on `publish.yml` is additive, like an input. Removing or renaming an output is a breaking
+  change and needs a new major tag.
 - Every step that talks to npm or GitHub tolerates a re-run: it checks the current state first, then acts.
 - Third-party actions are pinned to a major version or newer; download URLs name an exact version.
 

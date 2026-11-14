@@ -11,6 +11,9 @@ const localCaller = "./.github/workflows/publish.yml"
 const publishedCaller = "trajectonomics/cicd/.github/workflows/publish.yml@v1"
 const publishedDrift = "trajectonomics/cicd/.github/workflows/drift.yml@v1"
 
+/** The text of a GitHub Actions expression, built so Biome does not read it as a JS template. */
+const expression = (body: string): string => ["${{", body, "}}"].join(" ")
+
 function expectThinCaller(workflow: Workflow, uses: string): void {
 	expect(workflow.permissions).toMatchObject({ "id-token": "write", contents: "write" })
 	expect(workflow.on.push).toMatchObject({ branches: ["main"] })
@@ -53,6 +56,25 @@ describe("publish.yml (the reusable workflow)", () => {
 
 	it("asks for the same token permissions as its callers", () => {
 		expect(publish.permissions).toMatchObject({ "id-token": "write", contents: "write" })
+	})
+
+	it("exposes the version, tag, channel and dist-tag a later job needs", () => {
+		const outputs = publish.on.workflow_call?.outputs ?? {}
+		expect(Object.keys(outputs)).toEqual(["version", "tag", "channel", "dist-tag"])
+		for (const [name, output] of Object.entries(outputs)) {
+			expect(output.description).toBeTruthy()
+			expect(output.value).toBe(expression(`jobs.publish.outputs.${name}`))
+		}
+
+		const job = publish.jobs["publish"]?.outputs ?? {}
+		expect(job["version"]).toBe(expression("steps.plan.outputs.version"))
+		expect(job["channel"]).toBe(expression("steps.plan.outputs.channel"))
+		expect(job["dist-tag"]).toBe(expression("steps.plan.outputs.dist_tag"))
+		expect(job["tag"]).toBe(
+			expression(
+				"steps.plan.outputs.channel == 'stable' && format('v{0}', steps.plan.outputs.version) || ''",
+			),
+		)
 	})
 
 	it("explains a brand-new package before it tries to publish", () => {
