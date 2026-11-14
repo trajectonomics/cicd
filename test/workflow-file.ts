@@ -28,7 +28,8 @@ export type CalledOutput = {
 
 export type Workflow = {
 	on: {
-		push?: { branches?: string[] } | null
+		push?: { branches?: string[]; paths?: string[] } | null
+		pull_request?: { branches?: string[]; paths?: string[] } | null
 		schedule?: { cron?: string }[]
 		workflow_dispatch?: { inputs?: Record<string, unknown> } | null
 		workflow_call?: {

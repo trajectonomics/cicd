@@ -158,3 +158,50 @@ describe("the drift.yml template a consumer copies from the README", () => {
 		expect(callers[0]?.on).toHaveProperty("workflow_dispatch")
 	})
 })
+
+const publishedLint = "trajectonomics/cicd/.github/workflows/lint-workflows.yml@v1"
+const mainOnly = ["main"]
+const workflowPaths = [".github/workflows/**"]
+
+describe("lint-workflows.yml (the reusable workflow lint)", () => {
+	const lint = load("lint-workflows.yml")
+
+	it("is callable from other repos", () => {
+		expect(lint.on).toHaveProperty("workflow_call")
+	})
+
+	it("still lints this repo's own workflow changes on main", () => {
+		expect(lint.on.push).toMatchObject({ branches: mainOnly, paths: workflowPaths })
+		expect(lint.on.pull_request).toMatchObject({ branches: mainOnly, paths: workflowPaths })
+	})
+
+	it("may read the caller and nothing else", () => {
+		expect(lint.permissions).toEqual({ contents: "read" })
+	})
+
+	it("pins the actionlint release that knows the current runner labels", () => {
+		const run = steps(lint).find((step) => step.run)?.run ?? ""
+		expect(run).toContain("releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz")
+	})
+})
+
+describe("the lint-workflows.yml template a Consumer copies from the README", () => {
+	const callers = documentedCallers("lint-workflows.yml")
+
+	it("parses and calls the published workflow with the permissions it needs", () => {
+		expect(callers).toHaveLength(1)
+		const caller = callers[0]!
+		expect(caller.permissions).toEqual({ contents: "read" })
+		expect(Object.keys(caller.jobs)).toEqual(["actionlint"])
+		expect(caller.jobs["actionlint"]?.uses).toBe(publishedLint)
+		expect(caller.jobs["actionlint"]?.steps).toBeUndefined()
+	})
+
+	it("lints workflow changes on main, the only files the workflow can catch", () => {
+		expect(callers[0]?.on.push).toMatchObject({ branches: mainOnly, paths: workflowPaths })
+		expect(callers[0]?.on.pull_request).toMatchObject({
+			branches: mainOnly,
+			paths: workflowPaths,
+		})
+	})
+})
