@@ -11,7 +11,19 @@ Instructions for AI coding agents in `trajectonomics/cicd` (`@trajectonomics/too
 5. Done means `bun run check` passes (Biome lint with zero warnings, strict typecheck, tests, publint). `bun run format` fixes formatting and import order. Do not loosen the presets in `biome/` or `tsconfig/` to make an error go away: they are the product.
 6. Never edit `version` in `package.json` (a first-publish bump stays uncommitted) and never run `npm publish` locally, except the very first publish of a brand-new package, which the maintainer may run locally with `--provenance=false`. Merges to `main` publish alphas; a stable release is the manual Release workflow, which tags and creates the GitHub release itself. PR titles are conventional commits (`feat:`, `fix:`, `feat!:` ...) because they decide the next version (see README "Releasing"). A release that looks failed may not be: read `docs/runbooks/publishing.md` before diagnosing npm or release output.
 7. Pi (`pi.dev`) model restriction: When running the Pi coding agent (`pi.dev`), strictly use **DeepSeek 4.1 Flash** only (e.g., `deepseek/deepseek-v4.1-flash`, `deepseek/deepseek-v4.1-flash-fast`), whether routed via Command Code GOAT (`command-code`) or OpenCode Go (`opencode`). Do not switch to or run any other models (Claude, GPT, Gemini, etc.) in Pi sessions for this repository. This rule is mechanically enforced via `.pi/settings.json`.
+8. Never use `gemini-3.8-flash` anywhere; use `gemini-4-hydrogen` instead for Antigravity tasks and reviews (and `gemini-4-argon` where configured).
+9. Temporary files and scratch clones: `/tmp` is a shared, nearly full tmpfs. Never use fixed `/tmp` filenames (use `mktemp`, or `--body-file -` for `gh` bodies) and never install `node_modules` or clone scratch repos under `/tmp`; use `~/.cache/<slug>`.
 
+## Owner
+
+Save the owner's attention:
+
+- Finish end-to-end: commit, push, PR, independent review, `gh pr merge` when green or told to proceed, and any follow-up steps. Do not stop for small permission questions or end with a list of what is not done yet.
+- When unsure, consult subagents on other models (`claude-sonnet-5-5`, `gemini-4-hydrogen`, `gemini-4-argon`, `deepseek-v4.1-flash`) instead of asking the owner. Pi sessions stay on Rule 7.
+- Check live GitHub state (`gh issue view`, `gh pr view`) and CLI/API schemas before claiming a blocker.
+- Keep owner replies short; lead with what only the owner must do.
+- Record durable lessons in this repository's instructions, never in agent memory.
+- In T3 Code, when done and nothing waits on the owner, settle your own thread (`t3_thread_organize`, `action: "settle"`).
 
 ## Organisation goals
 
