@@ -12,7 +12,7 @@ const publishedCaller = "trajectonomics/cicd/.github/workflows/publish.yml@v1"
 const publishedDrift = "trajectonomics/cicd/.github/workflows/drift.yml@v1"
 
 /** The text of a GitHub Actions expression, built so Biome does not read it as a JS template. */
-const expression = (path: string): string => ["${{", path, "}}"].join(" ")
+const expression = (body: string): string => ["${{", body, "}}"].join(" ")
 
 function expectThinCaller(workflow: Workflow, uses: string): void {
 	expect(workflow.permissions).toMatchObject({ "id-token": "write", contents: "write" })
@@ -70,8 +70,11 @@ describe("publish.yml (the reusable workflow)", () => {
 		expect(job["version"]).toBe(expression("steps.plan.outputs.version"))
 		expect(job["channel"]).toBe(expression("steps.plan.outputs.channel"))
 		expect(job["dist-tag"]).toBe(expression("steps.plan.outputs.dist_tag"))
-		expect(job["tag"]).toContain("steps.plan.outputs.channel == 'stable'")
-		expect(job["tag"]).toContain("format('v{0}', steps.plan.outputs.version)")
+		expect(job["tag"]).toBe(
+			expression(
+				"steps.plan.outputs.channel == 'stable' && format('v{0}', steps.plan.outputs.version) || ''",
+			),
+		)
 	})
 
 	it("explains a brand-new package before it tries to publish", () => {
