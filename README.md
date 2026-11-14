@@ -83,7 +83,9 @@ jobs:
 ```
 
 Every package keeps this file named `release.yml` and keeps it a thin caller; publishing steps belong
-in `publish.yml`. The full caller contract is in `docs/runbooks/publishing.md`.
+in `publish.yml`. The full caller contract is in `docs/runbooks/publishing.md`. A job that runs after
+it reads `version`, `tag`, `channel` and `dist-tag` from `needs.publish.outputs`; a Consumer pinned to
+today's `v1` tag gets those outputs when that tag next moves.
 
 ```yaml
 # .github/workflows/docs-wiki.yml  (public repos only)

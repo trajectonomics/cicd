@@ -29,6 +29,39 @@ Every package's `release.yml` is a thin caller of `publish.yml@v1`; no publish s
 `test/workflows.test.ts` guards this contract in the repo's own caller and in the README template a
 new package copies.
 
+## Reading the publish outputs
+
+A caller job that runs after `publish.yml` reads what it published from `needs.publish.outputs`, so it
+never re-computes the version or scans git tags:
+
+| Output | Value |
+| --- | --- |
+| `version` | The published version. On alpha it includes the prerelease suffix, e.g. `1.2.0-alpha.3`. |
+| `tag` | `vX.Y.Z` on a stable release; an empty string on alpha. |
+| `channel` | `alpha` or `stable`. |
+| `dist-tag` | The npm dist-tag it published under, `alpha` or `latest`. |
+
+A later job that attaches assets to the release guards on the tag, because alpha produces none:
+
+```yaml
+jobs:
+  publish:
+    uses: trajectonomics/cicd/.github/workflows/publish.yml@v1
+    with:
+      bump: ${{ inputs.bump || 'auto' }}
+    secrets: inherit
+  binaries:
+    needs: publish
+    if: needs.publish.outputs.tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Uploading assets for ${{ needs.publish.outputs.tag }}"
+```
+
+A re-run keeps the outputs: the plan step still runs when npm or the GitHub release step skips work
+that already exists. Consumers pinned to `@v1` get these outputs when the floating `v1` tag next moves,
+so a caller that reads them must wait for that stable release.
+
 ## Trusted publishing
 
 - npm validates the **calling** workflow's repository and filename, so a package's `release.yml` must
