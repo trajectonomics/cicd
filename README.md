@@ -58,6 +58,22 @@ jobs:
 ```
 
 ```yaml
+# .github/workflows/lint-workflows.yml
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/**"]
+  pull_request:
+    branches: [main]
+    paths: [".github/workflows/**"]
+permissions:
+  contents: read
+jobs:
+  actionlint:
+    uses: trajectonomics/cicd/.github/workflows/lint-workflows.yml@v1
+```
+
+```yaml
 # .github/workflows/release.yml  (keep this filename: npm trusted publishing validates it)
 name: Release
 on:
@@ -103,7 +119,9 @@ jobs:
 `check.yml` installs Bun, runs `bun install --frozen-lockfile`, then `bun run check`. It takes
 optional `bun-version`, `node-version` and `script` inputs. `node-version` is empty by default, and its
 setup step is skipped unless the caller sets it. `pr-title.yml` requires a conventional-commit PR title.
-`publish.yml` is described under Releasing.
+`lint-workflows.yml` downloads a pinned `actionlint` and runs it over `.github/workflows/**`, so a
+Consumer with bespoke workflows is linted too; its job is `actionlint`, and the caller needs only
+`contents: read`. `publish.yml` is described under Releasing.
 
 `docs-wiki.yml` mirrors `README.md` (as the wiki Home), `GLOSSARY.md`, `docs/adr/` and
 `docs/runbooks/` to the repo's GitHub wiki after a merge to `main`. The repo stays the only source of
